@@ -79,6 +79,10 @@ class Product extends Model
     {
         return $this->belongsToMany(Tag::class, 'product_tags', 'product_id', 'tag_id');
     }
+    public function scopeHasVariants($query)
+    {
+        return $query->where('has_variants', true);
+    }
     public function variants()
     {
         return $this->hasMany(ProductVariant::class);
@@ -95,6 +99,16 @@ class Product extends Model
     public function sliders()
     {
         return $this->hasMany(ProductSlider::class);
+    }
+
+    public function scopeWithActiveVariants($query)
+    {
+        return $query->with(['activeVariants.color', 'activeVariants.size', 'images']);
+    }
+
+    public function scopeById($query, $productId)
+    {
+        return $query->where('id', $productId);
     }
     public function scopeActive($query)
     {

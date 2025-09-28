@@ -87,17 +87,18 @@ class ProductController extends Controller
 
     public function getVariants(Request $request)
     {
+        $request->validate([
+            'product_id' => 'required|integer|exists:products,id'
+        ]);
         try {
             $productId = $request->input('product_id');
 
-            // Fetch the product with its variants, colors, sizes, etc.
-            $product = Product::with([
-                'variants.color',
-                'variants.size',
-                'images'
-            ])->findOrFail($productId);
+            // First, get the product without variants to check has_variants
+            $product = Product::with(['images']) // Only load images initially
+                ->byId($productId)
+                ->firstOrFail();
 
-            // Format the data for the frontend
+            // Format the base response
             $response = [
                 'id' => $product->id,
                 'title' => $product->title,
@@ -111,8 +112,14 @@ class ProductController extends Controller
                         'is_primary' => $image->is_primary
                     ];
                 }),
-                // Only include active variants
-                'variants' => $product->variants->where('status', 'active')->map(function ($variant) {
+            ];
+
+            // Only load variants if the product has variants
+            if ($product->has_variants) {
+                // Eager load variants with their relationships
+                $product->load(['activeVariants.color', 'activeVariants.size']);
+
+                $response['variants'] = $product->activeVariants->map(function ($variant) {
                     return [
                         'id' => $variant->id,
                         'color_id' => $variant->color_id,
@@ -124,9 +131,11 @@ class ProductController extends Controller
                         'stock_quantity' => $variant->stock_quantity,
                         'sku' => $variant->sku
                     ];
-                })->values() 
-            ];
-            // dd($response);
+                });
+            } else {
+                $response['variants'] = [];
+            }
+
             return response()->json($response);
         } catch (\Exception $e) {
             return response()->json([
