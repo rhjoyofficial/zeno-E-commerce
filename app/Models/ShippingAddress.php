@@ -11,6 +11,7 @@ class ShippingAddress extends Model
     use HasFactory;
     protected $fillable = [
         'user_id',
+        'guest_session_id',
         'name',
         'address',
         'city',

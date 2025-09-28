@@ -106,8 +106,8 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">{{ $order->order_number }}</div>
-                                    @if ($order->invoice_number)
-                                        <div class="text-sm text-gray-500">Invoice: {{ $order->invoice_number }}</div>
+                                    @if ($order->formatted_invoice_number)
+                                        <div class="text-sm text-gray-500">Invoice: {{ $order->formatted_invoice_number }}</div>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">

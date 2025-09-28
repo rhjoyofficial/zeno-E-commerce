@@ -65,7 +65,7 @@ class CartController extends Controller
         if ($existingItem) {
             $existingItem->qty += $request->qty;
             $existingItem->save();
-            return $existingItem;
+            // return $existingItem;
         } else {
             ProductCart::create([
                 'user_id' => $userId,

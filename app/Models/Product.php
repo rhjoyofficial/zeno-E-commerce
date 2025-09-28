@@ -96,6 +96,10 @@ class Product extends Model
     {
         return $this->hasMany(ProductSlider::class);
     }
+    public function scopeById($query, $productId)
+    {
+        return $query->where('id', $productId);
+    }
     public function scopeActive($query)
     {
         return $query->where('status', 'active');

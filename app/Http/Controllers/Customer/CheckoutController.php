@@ -8,6 +8,7 @@ use App\Models\ProductCart;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Order;
+use App\Models\ShippingAddress;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
@@ -109,13 +110,15 @@ class CheckoutController extends Controller
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
             'phone'     => 'required|string|max:30',
-            'address'   => 'required|string|max:1000',
+            'address'   => 'required|string|max:255',
             'apartment' => 'nullable|string|max:255',
             'city'      => 'required|string|max:255',
             'postcode'  => 'nullable|string|max:50',
+            'email'     => Auth::check() ? 'nullable|email|max:255' : 'required|email|max:255',
             'payment'   => 'required|string|in:cod,bkash,mobile-banking,card',
         ]);
 
+        $customerIp = $request->ip();
         $checkout = session('checkout');
 
         if (empty($checkout) || empty($checkout['items']) || !is_array($checkout['items'])) {
@@ -131,25 +134,32 @@ class CheckoutController extends Controller
             $cartItems = ProductCart::with(['product', 'variant.color', 'variant.size'])
                 ->whereIn('id', $selectedIds)
                 ->where('user_id', $userId)
+                ->lockForUpdate()
                 ->get();
         } else {
             $selectedIds = $checkout['items'];
-            $cartItems = collect();
-            foreach (Session::get('cart', []) as $item) {
-                if (in_array($item['uniqueId'], $selectedIds)) {
-                    $product = Product::with(['variants'])->find($item['product_id']);
-                    $variant = $item['variant_id'] ? ProductVariant::with(['color', 'size'])->find($item['variant_id']) : null;
+            $cart = collect(Session::get('cart', []));
+            $selectedCart = $cart->whereIn('uniqueId', $selectedIds);
 
-                    $cartItems->push((object) [
-                        'id' => $item['uniqueId'],
-                        'product_id' => $item['product_id'],
-                        'product' => $product,
-                        'variant' => $variant,
-                        'variant_id' => $item['variant_id'],
-                        'qty' => $item['qty'],
-                    ]);
-                }
-            }
+            $productIds = $selectedCart->pluck('product_id')->unique();
+            $variantIds = $selectedCart->pluck('variant_id')->filter()->unique();
+
+            $products = Product::with('variants')->whereIn('id', $productIds)->get();
+            $variants = ProductVariant::with(['color', 'size'])->whereIn('id', $variantIds)->get();
+
+            $cartItems = $selectedCart->map(function ($item) use ($products, $variants) {
+                $product = $products->firstWhere('id', $item['product_id']);
+                $variant = $item['variant_id'] ? $variants->firstWhere('id', $item['variant_id']) : null;
+
+                return (object) [
+                    'id' => $item['uniqueId'],
+                    'product_id' => $item['product_id'],
+                    'product' => $product,
+                    'variant' => $variant,
+                    'variant_id' => $item['variant_id'],
+                    'qty' => $item['qty'],
+                ];
+            });
         }
 
         if ($cartItems->count() !== count($selectedIds)) {
@@ -164,8 +174,11 @@ class CheckoutController extends Controller
         }
 
         $grandTotal = 0;
+        $subtotal = 0;
+        $discountTotal = 0;
+        $taxTotal = 0;
         $orderItemsData = collect();
-        $vatRate = 0.05;
+        $vatRate = config('app.vat_rate', 0.05);
 
         foreach ($cartItems as $item) {
             $calculation = $this->calculateItemPrices($item, $vatRate);
@@ -180,36 +193,55 @@ class CheckoutController extends Controller
                 );
             }
 
-            $grandTotal += $calculation['totals']['total'];
+            $totals = $calculation['totals'];
+            $subtotal += $totals['subtotal'];
+            $discountTotal += $totals['discount_total'];
+            $taxTotal += $totals['tax_total'];
+            $grandTotal += $totals['total'];
         }
 
         if (isset($checkout['grand_total']) && abs($checkout['grand_total'] - $grandTotal) > 0.01) {
             session()->put('checkout.grand_total', $grandTotal);
             return redirect()->back()->with(['warning' => 'Product prices have changed. Please review the updated totals.']);
         }
-        // dd($orderItemsData);
+
         DB::beginTransaction();
 
         try {
+            $shippingData = [
+                'user_id' => $userId,
+                'guest_session_id' => $userId ? null : $sessionId,
+                'name' => $validated['full_name'],
+                'address' => $validated['address'] . ($validated['apartment'] ? ', ' . $validated['apartment'] : ''),
+                'city' => $validated['city'],
+                'postal_code' => $validated['postcode'] ?? null,
+                'phone' => $validated['phone'],
+                'country' => config('app.default_country', 'USA'),
+                'state' => null,
+                'is_default' => $userId ? false : null,
+            ];
+            $shippingAddress = ShippingAddress::create($shippingData);
+
             $orderNumber = 'ORD-' . Str::upper(Str::random(8));
+            $lastInvoice = Order::max('invoice_number') ?? 72873; // Start at 72874
+            $nextInvoice = $lastInvoice + 1;
 
             $order = Order::create([
                 'user_id' => $userId,
                 'guest_session_id' => $sessionId,
                 'order_number' => $orderNumber,
-                'customer_email' => Auth::check() ? Auth::user()->email : null,
+                'invoice_number' => $nextInvoice, // Store numeric
+                'customer_email' => Auth::check() ? Auth::user()->email : $validated['email'],
                 'customer_phone' => $validated['phone'],
-                'full_name' => $validated['full_name'],
-                'address' => $validated['address'],
-                'apartment' => $validated['apartment'] ?? null,
-                'city' => $validated['city'],
-                'postcode' => $validated['postcode'] ?? null,
+                'customer_ip' => $customerIp,
+                'shipping_address_id' => $shippingAddress->id,
                 'payment_method' => $validated['payment'],
-                'subtotal' => $orderItemsData->sum('row_total'),
-                'discount_amount' => $orderItemsData->sum('discount_amount'),
-                'tax_amount' => $orderItemsData->sum('tax_amount'),
+                'subtotal' => $subtotal,
+                'discount_amount' => $discountTotal,
+                'tax_amount' => $taxTotal,
                 'total' => $grandTotal,
                 'status' => 'pending',
+                'currency' => config('app.default_currency', 'USD'),
             ]);
 
             foreach ($orderItemsData as $itemData) {
@@ -237,9 +269,7 @@ class CheckoutController extends Controller
 
             if ($validated['payment'] === 'cod') {
                 $order->update(['status' => 'confirmed']);
-                return redirect()->route('cart.index')->with('success', 'Order placed successfully.');
             }
-
             return redirect()->route('cart.index')->with('success', 'Order placed successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -256,11 +286,14 @@ class CheckoutController extends Controller
     {
         $basePrice = $item->variant ? $item->variant->price : $item->product->price;
 
-        if (!$item->product->has_variants && $item->product->discount) {
-            $effectivePrice = $item->product->discount ? $item->product->discount_price : $item->product->price;
-        } else {
-            $effectivePrice = $basePrice;
+        // Improved discount: Check variant first, then product
+        $effectivePrice = $basePrice;
+        if ($item->variant && $item->variant->discount_price) {
+            $effectivePrice = $item->variant->discount_price;
+        } elseif (!$item->product->has_variants && $item->product->discount_price) {
+            $effectivePrice = $item->product->discount_price;
         }
+
         $discountAmount = $basePrice - $effectivePrice;
         $taxAmountItem = $effectivePrice * $vatRate;
         $rowTotal = $effectivePrice * $item->qty;

@@ -358,6 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
         })
             .then((response) => response.json())
             .then((data) => {
+                console.log(data);
                 if (data.success) {
                     if (typeof notifications !== "undefined") {
                         notifications.success("Product added to cart!");

@@ -176,53 +176,6 @@
     </script>
     <script src="{{ asset('js/product-popup.js') }}"></script>
 
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          
-
-    // Add to cart functionality for product cards
-        // document.querySelectorAll('.popup-add-to-cart').forEach(button => {
-        //     button.addEventListener('click', function() {
-        //         const productId = this.dataset.productId;
-        //         const price = this.dataset.price;
-                
-        //         // Simple add to cart with default quantity 1
-        //         fetch('{{ route("cart.add") }}', {
-        //             method: 'POST',
-        //             headers: {
-        //                 'Content-Type': 'application/json',
-        //                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        //             },
-        //             body: JSON.stringify({
-        //                 product_id: productId,
-        //                 qty: 1,
-        //                 price: price
-        //             })
-        //         })
-        //         .then(response => response.json())
-        //         .then(data => {
-        //             if (data.success) {
-        //                 // Show success message
-        //                notifications.success('Product added to cart!');                        
-        //                 // Update cart count
-        //                 document.querySelectorAll('.cart-counter').forEach(el => {
-        //                     el.textContent = data.cart_count;
-        //                 });
-        //             } else {
-        //                notifications.error('Error adding product to cart');
-        //             }
-        //         })
-        //         .catch(error => {
-        //             console.error('Error:', error);
-        //         notifications.error('Error adding product to cart');
-        //         });
-        //     });
-        // });
-    });
-
-    </script>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
     // Update quantity
