@@ -114,13 +114,12 @@ class CheckoutController extends Controller
             'apartment' => 'nullable|string|max:255',
             'city'      => 'required|string|max:255',
             'postcode'  => 'nullable|string|max:50',
-            'email'     => Auth::check() ? 'nullable|email|max:255' : 'required|email|max:255',
+            'email'     => Auth::check() ? 'nullable|email|max:255' : 'nullable|email|max:255',
             'payment'   => 'required|string|in:cod,bkash,mobile-banking,card',
         ]);
 
         $customerIp = $request->ip();
         $checkout = session('checkout');
-
         if (empty($checkout) || empty($checkout['items']) || !is_array($checkout['items'])) {
             session()->forget('checkout');
             return redirect()->route('cart.index')->with('warning', 'No items selected for checkout.');
@@ -218,12 +217,12 @@ class CheckoutController extends Controller
                 'phone' => $validated['phone'],
                 'country' => config('app.default_country', 'USA'),
                 'state' => null,
-                'is_default' => $userId ? false : null,
+
             ];
             $shippingAddress = ShippingAddress::create($shippingData);
 
             $orderNumber = 'ORD-' . Str::upper(Str::random(8));
-            $lastInvoice = Order::max('invoice_number') ?? 72873; // Start at 72874
+            $lastInvoice = Order::max('invoice_number') ?? 00000; // Start at 72874
             $nextInvoice = $lastInvoice + 1;
 
             $order = Order::create([
@@ -231,7 +230,7 @@ class CheckoutController extends Controller
                 'guest_session_id' => $sessionId,
                 'order_number' => $orderNumber,
                 'invoice_number' => $nextInvoice, // Store numeric
-                'customer_email' => Auth::check() ? Auth::user()->email : $validated['email'],
+                'customer_email' => Auth::check() ? Auth::user()->email : null,
                 'customer_phone' => $validated['phone'],
                 'customer_ip' => $customerIp,
                 'shipping_address_id' => $shippingAddress->id,
