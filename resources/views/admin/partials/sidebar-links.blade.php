@@ -111,3 +111,40 @@
     </svg>
     Settings
 </a>
+
+<!-- Home Sections -->
+<div x-data="{ open: {{ request()->routeIs('admin.home-sections.*') ? 'true' : 'false' }} }">
+    <button @click="open = !open"
+        class="w-full group flex items-center px-2 py-2 text-sm font-medium  {{ request()->routeIs('admin.home-sections.*') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50' }}">
+        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('admin.home-sections.*') ? 'text-indigo-500' : 'text-gray-400 group-hover:text-indigo-500' }}"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        <span class="flex-1 text-left">Home Sections</span>
+        <svg :class="{'transform rotate-90': open}" class="ml-2 h-4 w-4 text-gray-400 transition-transform duration-200"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+    </button>
+
+    <div x-show="open" x-collapse class="ml-5 pl-2 mt-1 space-y-1">
+        <a href="{{ route('admin.home-sections.index') }}"
+            class="group flex items-center px-2 py-2 text-sm font-medium  {{ request()->routeIs('admin.home-sections.index') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50' }}">
+            <svg class="mr-3 h-4 w-4 {{ request()->routeIs('admin.home-sections.index') ? 'text-indigo-500' : 'text-gray-400 group-hover:text-indigo-500' }}"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+            </svg>
+            Show Home Sections
+        </a>
+        <a href="{{ route('admin.home-sections.create') }}"
+            class="group flex items-center px-2 py-2 text-sm font-medium  {{ request()->routeIs('admin.home-sections.create') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50' }}">
+            <svg class="mr-3 h-4 w-4 {{ request()->routeIs('admin.home-sections.create') ? 'text-indigo-500' : 'text-gray-400 group-hover:text-indigo-500' }}"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Add Home Section
+        </a>
+    </div>
+</div>

@@ -44,6 +44,16 @@
     @include('frontend.navbar')
     @include('partials.flash-messages')
     @include('frontend.heroSection')
+    {{--  --}}
+    @foreach (App\Models\HomeSection::where('status', 'active')->orderBy('order')->get() as $section)
+    @if ($section->type === 'new_arrivals')
+    @include('frontend.dynamic-new-arrivals', ['section' => $section])
+    @elseif ($section->type === 'fashion')
+    @include('frontend.dynamic-fashion', ['section' => $section])
+    @endif
+    {{--  --}}
+    <hr>
+    @endforeach
     @include('frontend.new-arrivals')
     <hr>
     @include('frontend.mens-fashion')
@@ -163,7 +173,7 @@
 
     <script src="{{ asset('js/preloader.js') }}"></script>
     <script src="{{ asset('js/helper.js') }}"></script>
-    
+
     <!-- Global Config -->
     <script>
         window.appConfig = {

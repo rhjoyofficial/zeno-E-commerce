@@ -37,6 +37,17 @@ class Category extends Model
     {
         return $query->where('status', 'active');
     }
+
+    public function getDescendantIds()
+    {
+        $ids = [$this->id];
+        $children = $this->children; 
+        foreach ($children as $child) {
+            $ids = array_merge($ids, $child->getDescendantIds());
+        }
+        return $ids;
+    }
+
     protected static function booted()
     {
         static::creating(function ($category) {

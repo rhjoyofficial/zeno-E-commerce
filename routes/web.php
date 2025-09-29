@@ -240,6 +240,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('mega-content/{content}', 'Admin\NavigationController@updateMegaContent')->name('navigation.mega-content.update');
         Route::delete('mega-content/{content}', 'Admin\NavigationController@destroyMegaContent')->name('navigation.mega-content.destroy');
     });
+
+    // Home Section admin routes
+    Route::resource('home-sections', \App\Http\Controllers\Admin\HomeSectionController::class);
 });
 
 // ==================== MISC ROUTES ====================
