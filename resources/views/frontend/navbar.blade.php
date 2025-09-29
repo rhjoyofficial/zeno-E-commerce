@@ -1,4 +1,10 @@
-<nav
+<nav x-data="{
+    isMobileMenuOpen: false,
+    searchOpen: false,
+    activeMenu: null,
+    activeSubmenu: null,
+    activeUser: false
+}"
     class="bg-white sticky top-0 z-50 py-2 text-lg font-semibold text-black border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Search Bar Overlay -->

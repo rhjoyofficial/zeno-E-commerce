@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('sku');
             $table->text('description')->nullable();
-            $table->string('variant_options')->nullable();
+            $table->string('variant_size')->nullable();
+            $table->string('variant_color')->nullable();
             $table->decimal('price', 12, 2);
             $table->decimal('original_price', 12, 2)->nullable();
             $table->decimal('discount_amount', 12, 2)->default(0);

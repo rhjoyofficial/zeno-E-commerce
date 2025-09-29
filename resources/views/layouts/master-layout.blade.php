@@ -33,6 +33,7 @@
 <body class="bg-white text-black font-sans antialiased">
     {{-- @include('partials.preloader') --}}
     @include('frontend.navbar')
+    @include('partials.flash-messages')
     {{-- @include('components.dynamic-navigation') --}}
     @yield('content')
     {{-- Footer --}}

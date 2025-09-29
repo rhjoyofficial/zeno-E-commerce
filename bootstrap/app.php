@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'customer' => \App\Http\Middleware\CustomerMiddleware::class,
-            'syncCart' => \App\Http\Middleware\SyncCartOnLogin::class,
+            // 'syncCart' => \App\Http\Middleware\SyncCartOnLogin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -17,36 +17,32 @@ class HomeController extends Controller
             'id' => Auth::user()->id,
             'name' => Auth::user()->name,
             'email' => Auth::user()->email,
-        ] : null;        
+        ] : null;
 
-        // Query only active products with primary image and avg rating
-        $products = Product::with([
-            'images' => fn($q) => $q->where('is_primary', true),
-            'category',
-            'tags'
-        ])
-            ->withAvg('approvedReviews as avg_rating', 'rating')
-            ->where('status', 'active')
-            ->orderBy('created_at', 'desc')
+        $products = Product::with(['primaryImage', 'category', 'tags'])
+            ->active()
+            ->latest()
             ->get()
-            ->map(function ($product) {
+            ->map(function ($product) {                
                 return [
-                    'id' => $product->id,
-                    'image' => optional($product->images->first())->image_path ?? 'images/products/default.jpg',
-                    'title' => $product->title,
-                    'price' => $product->price,
-                    'badge' => $product->discount ? 'Sale' : null,
-                    'stock' => $product->stock_quantity > 0,
-                    'categories' => $product->category ? [$product->category->categoryName] : [],
-                    'tags' => $product->tags->pluck('tag')->toArray(),
-                    'avg_rating' => $product->avg_rating,
-                    'slug' => $product->slug,
+                    'id'            => $product->id,
+                    'image'         => $product->image_path,
+                    'title'         => $product->title,
+                    'price'         => $product->price,
+                    'discountPrice'=> $product->discount_price ? $product->discount_price : null,
+                    'badge'         => $product->discount ? 'Sale' : 'New',
+                    'stock'         => $product->stock_quantity > 0,
+                    'categories'    => $product->category ? [$product->category->categoryName] : [],
+                    'tags'          => $product->tags->pluck('tag')->toArray(),
+                    'avg_rating'    => $product->avg_rating,
+                    'slug'          => $product->slug,
                 ];
             });
 
+
         // Pass categories for filtering if you want
         $categories = Category::all();
-        // dd($products, $categories, $user, $cartTotal);
+        // dd($products, $categories, $user);
         return view('home', compact('products', 'categories', 'user'));
     }
 

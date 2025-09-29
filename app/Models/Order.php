@@ -32,6 +32,7 @@ class Order extends Model
         'tracking_number',
         'tracking_url',
         'user_id',
+        'guest_session_id',
         'customer_email',
         'customer_phone',
         'customer_ip',
@@ -49,6 +50,7 @@ class Order extends Model
     protected $casts = [
         'status' => 'string',
         'payment_status' => 'string',
+        'invoice_number' => 'integer',
         'subtotal' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
@@ -94,5 +96,10 @@ class Order extends Model
         static::updating(function ($order) {
             $order->updated_by = Auth::id() ?? null;
         });
+    }
+
+    public function getFormattedInvoiceNumberAttribute()
+    {
+        return $this->invoice_number ? 'INV-' . str_pad($this->invoice_number, 5, '0', STR_PAD_LEFT) : null;
     }
 }

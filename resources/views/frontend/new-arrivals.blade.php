@@ -30,7 +30,7 @@
     </div>
 
     @include('products.index', ['products' => $products])
-
+   
     <!-- Show More Button -->
     <div class="mt-16 text-center">
         <button onclick="window.location.href='{{ route('products.list') }}'"

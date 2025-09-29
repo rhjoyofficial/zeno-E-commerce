@@ -10,177 +10,236 @@ use App\Models\ProductVariant;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CartController extends Controller
 {
+    /**
+     * Add product to cart (DB or Session based on Auth).
+     */
     public function addToCart(Request $request)
     {
-        // dd($request->all());
+
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'qty' => 'required|integer|min:1',
-            'color' => 'nullable|string|max:200',
-            'size' => 'nullable|string|max:200',
-            'variant_id' => 'nullable|exists:product_variants,id'
+            'variant_id' => 'nullable|exists:product_variants,id',
+            'qty'   => 'required|integer|min:1',
         ]);
-        // dd($request->all());
-        $variantId = $request->variant_id;
-        if ($variantId === '') {
-            $variantId = null;
-        }
 
         $product = Product::findOrFail($request->product_id);
-
-        // Calculate price based on variant or product base price
+        // Initialize variables 
         $price = $product->price;
+        $size_id = null;
+        $color_id = null;
         if ($request->variant_id) {
-            $variant = ProductVariant::find($request->variant_id);
-            if ($variant) {
-                $price = $variant->price;
-            }
+            $variant = ProductVariant::findOrFail($request->variant_id);
+            $price = $variant->price;
+            $size_id = $variant->size_id;
+            $color_id = $variant->color_id;
         }
 
-        // Check if product is on sale
-        if ($product->sale_price && $product->sale_price < $price) {
-            $price = $product->sale_price;
-        }
+        $request->merge(['price' => $price, 'size_id' => $size_id, 'color_id' => $color_id]);
 
-        // For authenticated users
         if (Auth::check()) {
-            $cartItem = $this->addToDatabaseCart($request, $price);
-            return response()->json([
-                'success' => true,
-                'message' => '"' . $product->name . '" added to cart',
-                'cart_count' => $this->getCartCount()
+            return $this->addToDatabaseCart($request);
+        }
+
+        return $this->addToSessionCart($request);
+    }
+
+    /**
+     * Store product in database cart.
+     */
+    protected function addToDatabaseCart(Request $request)
+    {
+        $userId = Auth::id();
+        // Duplicate check
+        $existingItem = ProductCart::where('user_id', $userId)
+            ->where('product_id', $request->product_id)
+            ->where('variant_id', $request->variant_id)
+            ->first();
+
+        // Update quantity if item exists 
+        if ($existingItem) {
+            $existingItem->qty += $request->qty;
+            $existingItem->save();
+            // return $existingItem;
+        } else {
+            ProductCart::create([
+                'user_id' => $userId,
+                'product_id' => $request->product_id,
+                'variant_id' => $request->variant_id,
+                'color' => $request->input('color_id'),
+                'size' => $request->input('size_id'),
+                'qty' => $request->qty,
+                'price' => $request->input('price')
             ]);
         }
-
-        // For guests
-        $cartItem = $this->addToSessionCart($request, $product, $price);
         return response()->json([
             'success' => true,
-            'message' => '"' . $product->name . '" added to cart',
+            'message' => 'Product added to cart successfully!',
             'cart_count' => $this->getCartCount()
         ]);
     }
 
-    private function addToDatabaseCart(Request $request, $price)
-    {
-        $userId = Auth::id();
-
-        // Check if item already exists in cart
-        $existingItem = ProductCart::where('user_id', $userId)
-            ->where('product_id', $request->product_id)
-            ->where('variant_id', $request->variant_id)
-            ->where('color', $request->color)
-            ->where('size', $request->size)
-            ->first();
-
-        if ($existingItem) {
-            // Update quantity if item exists
-            $existingItem->qty += $request->qty;
-            $existingItem->save();
-            return $existingItem;
-        }
-
-        // Create new cart item
-        return ProductCart::create([
-            'user_id' => $userId,
-            'product_id' => $request->product_id,
-            'variant_id' => $request->variant_id,
-            'color' => $request->color,
-            'size' => $request->size,
-            'qty' => $request->qty,
-            'price' => $price
-        ]);
-    }
-
-    private function addToSessionCart(Request $request, $product, $price)
+    /**
+     * Store product in session cart.
+     */
+    protected function addToSessionCart(Request $request)
     {
         $cart = Session::get('cart', []);
-        $uniqueId = $this->generateCartItemId($request);
 
-        // Get product image safely
-        $productImage = null;
-        if ($product->images && $product->images->count() > 0) {
-            $productImage = $product->images->first()->url;
-        }
-
+        $uniqueId = md5($request->product_id . '_' . ($request->variant_id ?? '0'));
         if (isset($cart[$uniqueId])) {
-            // Update quantity if item exists
             $cart[$uniqueId]['qty'] += $request->qty;
         } else {
-            // Add new item to cart
             $cart[$uniqueId] = [
+                'uniqueId'   => $uniqueId,
                 'product_id' => $request->product_id,
                 'variant_id' => $request->variant_id,
-                'color' => $request->color,
-                'size' => $request->size,
+                'color' => $request->input('color_id'),
+                'size' => $request->input('size_id'),
                 'qty' => $request->qty,
-                'price' => $price,
-                'product_name' => $product->name,
-                'product_image' => $productImage,
-                'product_slug' => $product->slug
+                'price' => $request->input('price')
             ];
         }
 
         Session::put('cart', $cart);
-        return $cart[$uniqueId];
+        Session::save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product added to cart successfully!',
+            'cart_count' => $this->getCartCount()
+        ]);
     }
 
-    private function generateCartItemId(Request $request)
-    {
-        return md5(implode('|', [
-            $request->product_id,
-            $request->variant_id,
-            $request->color,
-            $request->size
-        ]));
-    }
+    /**
+     * Show cart items (DB for Auth, Session for Guest).
+     */
     public function index()
     {
         $cartItems = [];
         $totalItems = 0;
-
         if (Auth::check()) {
-            $cartItems = ProductCart::with([
-                'product' => function ($q) {
-                    $q->where('status', 'active')
-                        ->with(['images', 'variants.size', 'variants.color']);
-                },
-                'activeVariant',
-                'activeVariant.size',
-                'activeVariant.color'
-            ])
+            $cartItems = ProductCart::with(['product', 'variant'])
                 ->where('user_id', Auth::id())
                 ->get();
 
             $totalItems = $cartItems->sum('qty');
         } else {
-            $sessionCart = Session::get('cart', []);
-            foreach ($sessionCart as $id => $item) {
-                $product = Product::with(['images', 'variants.size', 'variants.color'])->find($item['product_id']);
-                if (!$product) continue;
+            $cart = Session::get('cart', []);
+            $cartItems = collect();
+            // dd($cart);
+            foreach ($cart as $item) {
+                $product = Product::find($item['product_id']);
+                $variant = $item['variant_id'] ? ProductVariant::find($item['variant_id']) : null;
 
-                $totalItems += $item['qty'];
-
-                $cartItems[] = (object) [
-                    'id'       => $id,
+                $cartItems->push((object) [
+                    'id'       => $item['uniqueId'],
+                    'product_id' => $item['product_id'],
                     'product'  => $product,
-                    'variant'  => $item['variant_id'] ? ProductVariant::with(['size', 'color'])->find($item['variant_id']) : null,
-                    'qty'      => $item['qty'],
-                    'price'    => $item['price'],
-                    'subtotal' => $item['qty'] * $item['price'],
-                    'color'    => $item['color'] ?? null,
-                    'size'     => $item['size'] ?? null,
-                ];
+                    'variant'  => $variant,
+                    'variant_id'  => $item['variant_id'],
+                    'qty' => $item['qty'],
+                ]);
+                $totalItems += $item['qty'];
             }
         }
 
         return view('customer.cart-item', compact('cartItems', 'totalItems'));
     }
+
+    /**
+     * Update qty of a cart item.
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate(['qty' => 'required|integer|min:1']);
+
+        if (Auth::check()) {
+            $cartItem = ProductCart::where('user_id', Auth::id())->findOrFail($id);
+            $cartItem->update(['qty' => $request->qty]);
+        } else {
+            $cart = Session::get('cart', []);
+            if (isset($cart[$id])) {
+                $cart[$id]['qty'] = $request->qty;
+                Session::put('cart', $cart);
+                Session::save();
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cart updated successfully!',
+            'cart_count' => $this->getCartCount(),
+        ]);
+    }
+
+    /**
+     * Remove item from cart.
+     */
+    public function remove($id)
+    {
+        if (Auth::check()) {
+            $cartItem = ProductCart::where('user_id', Auth::id())->findOrFail($id);
+            $cartItem->delete();
+        } else {
+            $cart = Session::get('cart', []);
+            if (isset($cart[$id])) {
+                unset($cart[$id]);
+                empty($cart) ? Session::forget('cart') : Session::put('cart', $cart);
+                Session::save();
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product removed from cart successfully!',
+            'cart_count' => $this->getCartCount()
+        ]);
+    }
+
+    /**
+     * Sync session cart to DB after login.
+     */
+    public function syncCart()
+    {
+        if (!Auth::check() || !Session::has('cart')) {
+            return;
+        }
+
+        $cart = Session::get('cart', []);
+        DB::transaction(function () use ($cart) {
+            foreach ($cart as $item) {
+                $existingItem = ProductCart::where([
+                    'user_id'    => Auth::id(),
+                    'product_id' => $item['product_id'],
+                    'variant_id' => $item['variant_id'],
+                ])->first();
+
+                if ($existingItem) {
+                    $existingItem->increment('qty', $item['qty']);
+                } else {
+                    ProductCart::create([
+                        'user_id'    => Auth::id(),
+                        'product_id' => $item['product_id'],
+                        'variant_id' => $item['variant_id'] ?? null,
+                        'qty'        => $item['qty'],
+                        'color'      => $item['color_id'] ?? null,
+                        'size'       => $item['size_id'] ?? null,
+                        'price'      => $item['price'],
+                    ]);
+                }
+            }
+        });
+
+        Session::forget('cart');
+        // return response()->json(['success' => true, 'cart_count' => $this->getCartCount()]);
+    }
+
     public function getVariantPrice(Request $request)
     {
         $productId = $request->product_id;
@@ -206,81 +265,6 @@ class CartController extends Controller
             'size'           => $variant->size?->name,
         ]);
     }
-    public function getSizes(Request $request)
-    {
-        $productId = $request->product_id;
-        $colorId   = $request->color_id;
-
-        $sizes = ProductVariant::with('size')
-            ->where('product_id', $productId)
-            ->where('color_id', $colorId)
-            ->get()
-            ->pluck('size')
-            ->unique('id')
-            ->values();
-
-        return response()->json($sizes);
-    }
-    public function getColors(Request $request)
-    {
-        $productId = $request->product_id;
-        $sizeId   = $request->size_id;
-
-        $colors = ProductVariant::with('color')
-            ->where('product_id', $productId)
-            ->where('size_id', $sizeId)
-            ->get()
-            ->pluck('color')
-            ->unique('id')
-            ->values();
-
-        return response()->json($colors);
-    }
-
-    
-    public function update(Request $request, $item)
-    {
-        $request->validate([
-            'qty' => 'required|integer|min:1'
-        ]);
-
-        if (Auth::check()) {
-            $cartItem = ProductCart::where('user_id', Auth::id())->findOrFail($item);
-            $cartItem->qty = $request->qty;
-            $cartItem->save();
-        } else {
-            $cart = Session::get('cart', []);
-            if (isset($cart[$item])) {
-                $cart[$item]['qty'] = $request->qty;
-                Session::put('cart', $cart);
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Cart updated successfully'
-        ]);
-    }
-
-    public function remove($item)
-    {
-        if (Auth::check()) {
-            $cartItem = ProductCart::where('user_id', Auth::id())->findOrFail($item);
-            $cartItem->delete();
-        } else {
-            $cart = Session::get('cart', []);
-            if (isset($cart[$item])) {
-                unset($cart[$item]);
-                Session::put('cart', $cart);
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Item removed from cart',
-            'cart_count' => $this->getCartCount()
-        ]);
-    }
 
     public function getCartCount()
     {
@@ -293,51 +277,11 @@ class CartController extends Controller
         foreach ($cart as $item) {
             $count += $item['qty'];
         }
-        return $count;
-    }
-
-    public function syncCart()
-    {
-        if (Auth::check()) {
-            $sessionCart = Session::get('cart', []);
-
-            if (!empty($sessionCart)) {
-                foreach ($sessionCart as $item) {
-                    // Check if item already exists in database
-                    $existingItem = ProductCart::where('user_id', Auth::id())
-                        ->where('product_id', $item['product_id'])
-                        ->where('variant_id', $item['variant_id'])
-                        ->where('color', $item['color'])
-                        ->where('size', $item['size'])
-                        ->first();
-
-                    if ($existingItem) {
-                        // Update quantity
-                        $existingItem->qty += $item['qty'];
-                        $existingItem->save();
-                    } else {
-                        // Create new item
-                        ProductCart::create([
-                            'user_id' => Auth::id(),
-                            'product_id' => $item['product_id'],
-                            'variant_id' => $item['variant_id'],
-                            'color' => $item['color'],
-                            'size' => $item['size'],
-                            'qty' => $item['qty'],
-                            'price' => $item['price']
-                        ]);
-                    }
-                }
-
-                // Clear session cart after syncing
-                Session::forget('cart');
-            }
+        if ($count == 0 && empty($cart)) {
+            Session::forget('cart');
         }
 
-        return response()->json([
-            'success' => true,
-            'cart_count' => $this->getCartCount()
-        ]);
+        return $count;
     }
 
     public static function getCartCountStatic()
@@ -354,23 +298,5 @@ class CartController extends Controller
             $count += $item['qty'];
         }
         return $count;
-    }
-
-    private function calculateItemTotal($item)
-    {
-        $price = $item->price;
-        $quantity = $item->qty;
-
-        // Use discount price if available
-        if ($item->product->discount && $item->product->discount_price) {
-            $price = $item->product->discount_price;
-        }
-
-        return [
-            'item_total' => $price * $quantity,
-            'item_price' => $price,
-            'original_total' => $item->product->price * $quantity,
-            'discount' => ($item->product->price * $quantity) - ($price * $quantity)
-        ];
     }
 }

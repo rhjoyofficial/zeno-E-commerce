@@ -12,3 +12,34 @@
     scrollbar-width: none;    /* Firefox */
   }
 }
+[x-cloak] {
+    display: none !important;
+}
+
+input[type="checkbox"]:focus,
+input[type="radio"]:focus,
+input[type="checkbox"]:checked:hover,
+input[type="checkbox"]:checked:focus,
+input[type="radio"]:checked:hover,
+input[type="radio"]:checked:focus,
+input[type="text"]:focus,
+input[type="tel"]:focus,
+input[type="email"]:focus,
+input[type="url"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+input[type="search"]:focus,
+input[type="time"]:focus,
+input[type="number"]:focus,
+textarea:focus, select:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    --tw-ring-offset-width: 0 !important;
+    --tw-ring-offset-color: transparent !important;
+    --tw-ring-color: transparent !important;
+    --tw-ring-offset-shadow: none !important;
+    --tw-ring-shadow: none !important;
+    box-shadow: none !important;
+    border-color: initial !important;
+    -webkit-box-shadow: none !important;
+}

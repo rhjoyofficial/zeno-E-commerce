@@ -35,7 +35,8 @@ return new class extends Migration
 
         Schema::create('shipping_addresses', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->string('guest_session_id')->nullable();
             $table->string('name', 100);
             $table->string('address', 255);
             $table->string('city', 100);

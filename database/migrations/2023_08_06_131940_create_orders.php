@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->string('order_number')->unique();
-            $table->string('invoice_number')->unique()->nullable();
+            $table->bigInteger('invoice_number')->unsigned()->nullable()->unique();
             $table->enum('status', [
                 'pending',
                 'confirmed',
@@ -43,9 +43,10 @@ return new class extends Migration
             $table->decimal('shipping_weight', 10, 2)->nullable();
             $table->string('tracking_number')->nullable();
             $table->string('tracking_url')->nullable();
-            $table->unsignedBigInteger('user_id');
-            $table->string('customer_email')->index();
-            $table->string('customer_phone')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->string('guest_session_id')->nullable();
+            $table->string('customer_email')->index()->nullable();
+            $table->string('customer_phone')->index()->nullable();
             $table->string('customer_ip')->nullable();
             $table->timestamp('confirmed_at')->nullable();
             $table->timestamp('paid_at')->nullable();

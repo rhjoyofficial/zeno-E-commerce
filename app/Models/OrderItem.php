@@ -16,7 +16,8 @@ class OrderItem extends Model
         'name',
         'sku',
         'description',
-        'variant_options',
+        'variant_size',
+        'variant_color',
         'price',
         'original_price',
         'discount_amount',
@@ -44,7 +45,7 @@ class OrderItem extends Model
         'weight' => 'decimal:2',
         'volume' => 'decimal:2',
         'fulfillment_status' => 'string',
-        'variant_options' => 'array',
+      
     ];
     public function order()
     {

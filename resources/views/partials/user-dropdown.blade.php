@@ -1,4 +1,4 @@
-<div x-data="{ activeUser: false }" class="relative text-black hover:text-gray-700">
+<div class="relative text-black hover:text-gray-700">
     <!-- Toggle Button -->
     <button @click="activeUser = !activeUser"
         class="flex items-center p-2 hover:text-gray-700 relative mr-2 last:mr-0  transition-colors duration-200 focus:outline-none">

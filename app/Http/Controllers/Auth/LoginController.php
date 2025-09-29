@@ -5,10 +5,9 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Gate;
-use App\Models\User;
+use Illuminate\Support\Facades\Session;
 
 class LoginController extends Controller
 {
@@ -34,6 +33,14 @@ class LoginController extends Controller
                     return redirect()->route('admin.dashboard')
                         ->with('success', 'Login successful! Welcome back, Admin.');
                 }
+
+                if (Auth::check() && Session::has('cart')) {
+                    // Get the cart controller instance
+                    $cartController = app()->make('App\Http\Controllers\Customer\CartController');
+                    // Sync the cart
+                    $cartController->syncCart();
+                }
+
                 return redirect()
                     ->intended($this->redirectPath())
                     ->with('success', 'Login successful! Welcome back.');
@@ -52,7 +59,7 @@ class LoginController extends Controller
     }
     protected function redirectPath()
     {
-        return route('/');
+        return route('home');
     }
 
     public function logout(Request $request)
