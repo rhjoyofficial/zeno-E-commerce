@@ -221,26 +221,46 @@ class ProductController extends Controller
         }
     }
 
-    public function updateStatus(Product $product, $status)
+    public function updateStatus(Request $request, Product $product)
     {
-        if (!in_array($status, ['active', 'inactive', 'discontinued'])) {
-            return response()->json(['error' => 'Invalid status'], 400);
+        $validated = $request->validate([
+            'status' => 'required|in:active,inactive,discontinued',
+        ]);
+
+        try {
+            $product->update(['status' => $validated['status']]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Product status updated to ' . $validated['status'] . '.',
+                'status' => $validated['status']
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status: ' . $e->getMessage()
+            ], 500);
         }
-
-        $product->update(['status' => $status]);
-
-        return response()->json(['success' => true]);
     }
 
-    public function updateStock(Product $product, Request $request)
+    public function updateStock(Request $request, Product $product)
     {
-        $request->validate([
+        $validated = $request->validate([
             'stock_quantity' => 'required|integer|min:0'
         ]);
 
-        $product->update(['stock_quantity' => $request->stock_quantity]);
-
-        return response()->json(['success' => true]);
+        try {
+            $product->update(['stock_quantity' => $validated['stock_quantity']]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Stock quantity updated to ' . $validated['stock_quantity'] . '.',
+                'stock_quantity' => $validated['stock_quantity']
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update stock: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     protected function generateSku($title)

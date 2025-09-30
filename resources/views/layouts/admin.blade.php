@@ -25,7 +25,7 @@
 
     <!-- Preloader -->
     {{-- @include('partials.preloader') --}}
-
+    @include('components.notification')
     <div class="min-h-screen flex">
         <!-- Sidebar -->
         <div class="hidden md:flex md:flex-shrink-0">
@@ -42,7 +42,8 @@
                     </nav>
                 </div>
                 <!-- Admin Profile Section -->
-                <div class="flex-shrink-0 flex border-t border-gray-200 p-4 fixed bottom-0" style="width: inherit;">
+                {{-- <div class="flex-shrink-0 flex border-t bg-white border-gray-200 p-4 fixed bottom-0"
+                    style="width: inherit;">
                     <a href="{{ route('profile') }}" class="flex-shrink-0 w-full group block">
                         <div class="flex items-center">
                             <div>
@@ -57,7 +58,7 @@
                             </div>
                         </div>
                     </a>
-                </div>
+                </div> --}}
             </div>
         </div>
 
@@ -150,6 +151,7 @@
     </div>
 
     <script src="{{ asset('js/preloader.js') }}"></script>
+    <script src="{{ asset('js/notification.js') }}"></script>
     @stack('scripts')
 </body>
 
