@@ -54,8 +54,10 @@
             <p class="text-gray-800 text-xl font-semibold uppercase">level up</p>
             <h2 class="text-[40px] font-normal text-black mb-2 font-megumi tracking-tight">Your Fashion Game</h2>
         </div>
-        @php $products = $section->getProducts(); @endphp
-        @include('products.index', ['products' => $products->map(function($product) { /* same mapping as above */ })])
+        @php
+        $products = $section->getProducts();
+        @endphp
+        @include('products.index', ['products' => $products])
         <div class="mt-16 text-center">
             <button onclick="window.location.href='{{ route('products.list') }}'"
                 class="bg-black text-white px-10 py-3 text-xl transition-colors tracking-[2px] font-semibold uppercase">Find

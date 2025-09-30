@@ -35,13 +35,39 @@ class HomeSection extends Model
     // Helper to get products for the section
     public function getProducts()
     {
+        $products = collect();
+
         if ($this->type === 'new_arrivals') {
-            return Product::latest()->take(8)->get(); // Adjust limit as needed
+            $products = Product::with(['primaryImage', 'category', 'tags'])
+                ->active()
+                ->latest()
+                ->take(8)
+                ->get();
         } elseif ($this->type === 'fashion' && $this->category) {
-            // Get all descendant category IDs (assuming you have a method for hierarchy)
-            $categoryIds = $this->category->getDescendantIds(); // Implement this in Category model
-            return Product::whereIn('category_id', $categoryIds)->take(8)->get();
+            // Get all descendant category IDs (you'll need to implement getDescendantIds in Category model)
+            $categoryIds = $this->category->getDescendantIds();
+            $products = Product::with(['primaryImage', 'category', 'tags'])
+                ->whereIn('category_id', $categoryIds)
+                ->active()
+                ->take(8)
+                ->get();
         }
-        return collect();
+
+        // Map products to the expected format
+        return $products->map(function ($product) {
+            return [
+                'id'            => $product->id,
+                'image'         => $product->image_path,
+                'title'         => $product->title,
+                'price'         => $product->price,
+                'discountPrice' => $product->discount_price ?: null,
+                'badge'         => $product->discount ? 'Sale' : 'New',
+                'stock'         => $product->stock_quantity > 0,
+                'categories'    => $product->category ? [$product->category->categoryName] : [],
+                'tags'          => $product->tags->pluck('tag')->toArray(),
+                'avg_rating'    => $product->avg_rating,
+                'slug'          => $product->slug,
+            ];
+        });
     }
 }

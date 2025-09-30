@@ -35,7 +35,7 @@ class BrandController extends Controller
 
         Brand::create([
             'brand_name' => $request->brand_name,
-            'brand_image' => $imagePath, 
+            'brand_image' => $imagePath,
         ]);
 
         return redirect()->back()->with('success', 'Brand created successfully!');
@@ -77,5 +77,26 @@ class BrandController extends Controller
 
         $brand->delete();
         return redirect()->back()->with('success', 'Brand deleted successfully');
+    }
+
+    public function updateStatus(Request $request, Brand $brand)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        try {
+            $brand->update(['status' => $validated['status']]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Brand status updated to ' . $validated['status'] . '.',
+                'status' => $validated['status']
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

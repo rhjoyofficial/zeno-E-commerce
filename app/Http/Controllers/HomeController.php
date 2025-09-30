@@ -18,7 +18,6 @@ class HomeController extends Controller
             'name' => Auth::user()->name,
             'email' => Auth::user()->email,
         ] : null;
-
         $products = Product::with(['primaryImage', 'category', 'tags'])
             ->active()
             ->latest()
@@ -38,11 +37,7 @@ class HomeController extends Controller
                     'slug'          => $product->slug,
                 ];
             });
-
-
-        // Pass categories for filtering if you want
         $categories = Category::all();
-        // dd($products, $categories, $user);
         return view('home', compact('products', 'categories', 'user'));
     }
 

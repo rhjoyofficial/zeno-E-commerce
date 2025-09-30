@@ -16,20 +16,10 @@
         @endforeach
     </div>
 
-    @php $products = $section->getProducts(); @endphp
-    <!-- Fetches latest products -->
-    @include('products.index', ['products' => $products->map(function($product) {
-    return [
-    'id' => $product->id,
-    'image' => $product->images->first()?->image_path, // Assume product has images relation
-    'title' => $product->title,
-    'price' => $product->price,
-    'discountPrice' => $product->discount_price,
-    'badge' => 'New', // Dynamic if needed
-    'stock' => $product->stock_quantity > 0,
-    'categories' => [$product->category?->category_name] // Add parent slugs if needed
-    ];
-    })])
+    @php
+    $products = $section->getProducts();
+    @endphp
+    @include('products.index', ['products' => $products])
 
     <!-- Show More Button -->
     <div class="mt-16 text-center">

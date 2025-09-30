@@ -39,6 +39,7 @@ use App\Http\Controllers\Admin\{
     BrandController,
     CategoryController,
     CustomerController,
+    HomeSectionController,
     OrderController,
     ReportController,
     SettingController
@@ -175,6 +176,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('brands', BrandController::class);
     Route::get('brands/{brand}/product/create', [AdminProductController::class, 'create'])
         ->name('brands.products.create');
+    Route::post('/brands/{brand}/update-status', [BrandController::class, 'updateStatus'])->name('admin.brands.update-status');
 
     // Categories
     Route::resource('categories', CategoryController::class);
@@ -242,7 +244,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     });
 
     // Home Section admin routes
-    Route::resource('home-sections', \App\Http\Controllers\Admin\HomeSectionController::class);
+    Route::resource('home-sections', HomeSectionController::class);
+    Route::patch('home-sections/{homeSection}/toggle-status', [HomeSectionController::class, 'toggleStatus'])
+        ->name('home-sections.toggleStatus');
 });
 
 // ==================== MISC ROUTES ====================

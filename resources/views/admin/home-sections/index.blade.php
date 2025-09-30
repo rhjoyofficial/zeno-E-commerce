@@ -53,11 +53,15 @@
                             {{ $section->title }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        @if($section->status == 'active') bg-green-100 text-green-800
-                                        @else bg-red-100 text-red-800 @endif">
+                            <button type="button" onclick="toggleStatus({{ $section->id }})" class="status-toggle px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors cursor-pointer
+                                           @if($section->status == 'active') 
+                                               bg-green-100 text-green-800 hover:bg-green-200 
+                                           @else 
+                                               bg-red-100 text-red-800 hover:bg-red-200 
+                                           @endif" data-section-id="{{ $section->id }}"
+                                data-current-status="{{ $section->status }}">
                                 {{ ucfirst($section->status) }}
-                            </span>
+                            </button>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ $section->order }}
@@ -96,5 +100,64 @@
 @endsection
 
 @push('scripts')
+<script>
+    function toggleStatus(sectionId) {
+       const button = document.querySelector(`button[data-section-id="${sectionId}"]`);
+       const currentStatus = button.getAttribute('data-current-status');
+       const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
 
+       // Show loading state
+       const originalText = button.textContent;
+       button.disabled = true;
+       button.innerHTML = '<svg class="animate-spin h-3 w-3 mx-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+       // Make AJAX request
+       fetch(`/admin/home-sections/${sectionId}/toggle-status`, {
+           method: 'PATCH',
+           headers: {
+               'Content-Type': 'application/json',
+               'X-CSRF-TOKEN': '{{ csrf_token() }}',
+               'Accept': 'application/json'
+           }
+       })
+       .then(response => response.json())
+       .then(data => {
+           if (data.success) {
+               // Update button appearance and data
+               button.setAttribute('data-current-status', newStatus);
+
+               if (newStatus === 'active') {
+                   button.className = 'status-toggle px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors cursor-pointer bg-green-100 text-green-800 hover:bg-green-200';
+                   button.textContent = 'Active';
+               } else {
+                   button.className = 'status-toggle px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors cursor-pointer bg-red-100 text-red-800 hover:bg-red-200';
+                   button.textContent = 'Inactive';
+               }
+
+               // Show success notification
+               NotificationSystem.show({
+                   type: 'success',
+                   title: 'Status Updated',
+                   message: `Section status changed to ${newStatus}.`,
+                   duration: 5000
+               });
+           } else {
+               throw new Error(data.message || 'Failed to update status');
+           }
+       })
+       .catch(error => {
+           console.error('Error:', error);
+           button.textContent = originalText;
+           NotificationSystem.show({
+               type: 'error',
+               title: 'Error',
+               message: error.message || 'Failed to update status.',
+               duration: 5000
+           });
+       })
+       .finally(() => {
+           button.disabled = false;
+       });
+   }
+</script>
 @endpush
