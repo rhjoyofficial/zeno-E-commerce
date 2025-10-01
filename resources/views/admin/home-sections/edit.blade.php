@@ -4,22 +4,21 @@
 <div class="container mx-auto p-4">
     <div class="bg-white border border-gray-200">
         <!-- Page Header -->
-        <div class="p-4 border-b border-gray-200">
-            <h2 class="text-xl font-bold text-gray-800">Edit Home Section</h2>
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-800">Edit Home Section</h2>
         </div>
 
         <!-- Form Section -->
-        <div class="p-4">
-            <form action="{{ route('admin.home-sections.update', $homeSection) }}" method="POST"
-                enctype="multipart/form-data">
+        <div class="p-6">
+            <form action="{{ route('admin.home-sections.update', $homeSection->id) }}" method="POST"
+                enctype="multipart/form-data" id="homeSectionForm">
                 @csrf
                 @method('PUT')
 
                 <!-- Display Validation Errors -->
                 @if($errors->any())
-                <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded">
-                    <h3 class="text-sm font-medium text-red-800 mb-2">Please fix the following errors:</h3>
-                    <ul class="text-sm text-red-600 list-disc list-inside">
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
+                    <ul class="list-disc list-inside space-y-1">
                         @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
                         @endforeach
@@ -27,93 +26,114 @@
                 </div>
                 @endif
 
-                <div class="space-y-4">
-                    <!-- Type Selection - FIXED -->
-                    <div>
-                        <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Section Type</label>
-                        <input type="text" value="{{ ucfirst(str_replace('_', ' ', $homeSection->type)) }}"
-                            class="w-full border border-gray-300 p-2 bg-gray-50 text-gray-600" readonly>
+                <div class="flex flex-wrap -mx-2">
+                    <!-- Type Field (Readonly) -->
+                    <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
+                        <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                        <input type="text" id="type_display"
+                            value="{{ $homeSection->type === 'fashion' ? 'Fashion' : 'New Arrivals' }}"
+                            class="w-full border border-gray-300 p-3 bg-gray-100 text-gray-600" readonly>
                         <input type="hidden" name="type" value="{{ $homeSection->type }}">
-                        <p class="text-xs text-gray-500 mt-1">Type cannot be changed</p>
+                        <p class="text-xs text-gray-500 mt-1">Type cannot be changed after creation</p>
                     </div>
 
-                    <!-- Title & Subtitle -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                            <input type="text" name="title" id="title"
-                                class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0"
-                                value="{{ old('title', $homeSection->title) }}" required>
-                        </div>
-                        <div>
-                            <label for="subtitle" class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
-                            <input type="text" name="subtitle" id="subtitle"
-                                class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0"
-                                value="{{ old('subtitle', $homeSection->subtitle) }}">
-                        </div>
+                    <!-- Title Field -->
+                    <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
+                        <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                        <input type="text" name="title" id="title" value="{{ old('title', $homeSection->title) }}"
+                            class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0" required>
                     </div>
 
-                    <!-- Banner Image -->
-                    <div>
+                    <!-- Subtitle Field -->
+                    <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
+                        <label for="subtitle" class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                        <input type="text" name="subtitle" id="subtitle"
+                            value="{{ old('subtitle', $homeSection->subtitle) }}"
+                            class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0">
+                    </div>
+
+                    <!-- Banner Image Field (Only for Fashion) -->
+                    <div
+                        class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4 fashion-field {{ $homeSection->type !== 'fashion' ? 'hidden' : '' }}">
                         <label for="banner_image" class="block text-sm font-medium text-gray-700 mb-1">Banner
                             Image</label>
+                        <input type="file" name="banner_image" id="banner_image"
+                            class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0">
                         @if($homeSection->banner_image)
-                        <div class="mb-2 flex items-center space-x-3">
-                            <img src="{{ Storage::url($homeSection->banner_image) }}" alt="Current banner"
-                                class="h-12 w-auto">
-                            <span class="text-sm text-gray-600">Current image</span>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-600 mb-1">Current Banner Image:</p>
+                            <img src="{{ Storage::disk('public')->url($homeSection->banner_image) }}" alt="Banner Image"
+                                class="h-20 w-auto object-cover rounded">
                         </div>
                         @endif
-                        <input type="file" name="banner_image" id="banner_image"
-                            class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0" accept="image/*">
+                        <p class="text-xs text-gray-500 mt-1">Recommended size: 1200x400px or larger</p>
                     </div>
 
-                    <!-- Category Selection -->
-                    <div class="{{ $homeSection->type == 'fashion' ? '' : 'hidden' }}" id="category_id_div">
-                        <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Linked
-                            Category</label>
+                    <!-- Section Title Field (Only for Fashion) -->
+                    <div
+                        class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4 fashion-field {{ $homeSection->type !== 'fashion' ? 'hidden' : '' }}">
+                        <label for="section_title" class="block text-sm font-medium text-gray-700 mb-1">Section
+                            Title</label>
+                        <input type="text" name="section_title" id="section_title"
+                            value="{{ old('section_title', $homeSection->section_title) }}"
+                            class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0">
+                    </div>
+
+                    <!-- Section Subtitle Field (Only for Fashion) -->
+                    <div
+                        class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4 fashion-field {{ $homeSection->type !== 'fashion' ? 'hidden' : '' }}">
+                        <label for="section_subtitle" class="block text-sm font-medium text-gray-700 mb-1">Section
+                            Subtitle</label>
+                        <input type="text" name="section_subtitle" id="section_subtitle"
+                            value="{{ old('section_subtitle', $homeSection->section_subtitle) }}"
+                            class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0">
+                    </div>
+
+                    <!-- Parent Category Field (Only for Fashion) -->
+                    <div
+                        class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4 fashion-field {{ $homeSection->type !== 'fashion' ? 'hidden' : '' }}">
+                        <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Parent Category
+                            *</label>
                         <select name="category_id" id="category_id"
-                            class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0">
-                            <option value="">Select Category</option>
-                            @foreach ($categories as $cat)
-                            <option value="{{ $cat->id }}" {{ old('category_id', $homeSection->category_id) == $cat->id
-                                ? 'selected' : '' }}>
-                                {{ $cat->category_name }}
+                            class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0">
+                            <option value="">Select Parent Category</option>
+                            @foreach ($parentCategories as $category)
+                            <option value="{{ $category->id }}" {{ old('category_id', $homeSection->category_id) ==
+                                $category->id ? 'selected' : '' }}>
+                                {{ $category->category_name }}
                             </option>
                             @endforeach
                         </select>
                     </div>
 
-                    <!-- Status & Order -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                            <select name="status" id="status"
-                                class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0" required>
-                                <option value="active" {{ old('status', $homeSection->status) == 'active' ? 'selected' :
-                                    '' }}>Active</option>
-                                <option value="inactive" {{ old('status', $homeSection->status) == 'inactive' ?
-                                    'selected' : '' }}>Inactive</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="order" class="block text-sm font-medium text-gray-700 mb-1">Display
-                                Order</label>
-                            <input type="number" name="order" id="order"
-                                class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0"
-                                value="{{ old('order', $homeSection->order) }}" min="0">
-                        </div>
+                    <!-- Status Field -->
+                    <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                        <select name="status" id="status"
+                            class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0" required>
+                            <option value="active" {{ old('status', $homeSection->status) == 'active' ? 'selected' : ''
+                                }}>Active</option>
+                            <option value="inactive" {{ old('status', $homeSection->status) == 'inactive' ? 'selected' :
+                                '' }}>Inactive</option>
+                        </select>
+                    </div>
+
+                    <!-- Order Field -->
+                    <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
+                        <label for="order" class="block text-sm font-medium text-gray-700 mb-1">Order *</label>
+                        <input type="number" name="order" id="order" value="{{ old('order', $homeSection->order) }}"
+                            class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0" min="0" required>
                     </div>
                 </div>
 
-                <!-- Slider Items Section -->
+                <!-- Slider Items Section (Only for Fashion) -->
                 <div id="slider_items"
-                    class="{{ $homeSection->type == 'fashion' ? 'mt-6 border-t border-gray-200 pt-6' : 'hidden' }}">
+                    class="mt-8 border-t border-gray-200 pt-6 {{ $homeSection->type !== 'fashion' ? 'hidden' : '' }}">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-medium text-gray-900">Slider Items</h3>
-                        <button type="button" id="add_slider_item"
-                            class="inline-flex items-center px-3 py-1.5 bg-black text-white hover:bg-gray-800 text-sm">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button type="button" id="add_item"
+                            class="inline-flex items-center px-4 py-2 bg-black text-white hover:bg-gray-800 text-sm font-medium">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
@@ -121,85 +141,24 @@
                         </button>
                     </div>
 
-                    <div id="slider_items_container" class="space-y-4">
-                        @if($homeSection->type == 'fashion')
-                        @php
-                        $oldItems = old('items', []);
-                        $items = $homeSection->items;
-                        $itemCount = count($oldItems) > 0 ? count($oldItems) : count($items);
-                        @endphp
+                    <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded hidden" id="duplicateWarning">
+                        <p class="text-yellow-700 text-sm">Warning: You have selected the same child category multiple
+                            times.</p>
+                    </div>
 
-                        @for($key = 0; $key < $itemCount; $key++) @php $itemData=isset($oldItems[$key]) ?
-                            $oldItems[$key] : ($items[$key] ?? null); $existingImage=$items[$key]->image ??
-                            ($itemData['existing_image'] ?? null);
-                            $itemId = $items[$key]->id ?? ($itemData['id'] ?? null);
-                            @endphp
-
-                            @if($itemData)
-                            <div class="border border-gray-200 p-4 bg-gray-50 rounded" id="item_{{ $key }}">
-                                <div class="flex justify-between items-center mb-3 pb-3 border-b border-gray-200">
-                                    <h4 class="font-medium text-gray-900">Item {{ $key + 1 }}</h4>
-                                    <button type="button" onclick="removeItem('item_{{ $key }}')"
-                                        class="text-red-600 hover:text-red-800 p-1 {{ $itemCount <= 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
-                                        {{ $itemCount <=1 ? 'disabled' : '' }}>
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
-                                </div>
-
-                                @if($existingImage)
-                                <div class="mb-3 flex items-center space-x-3">
-                                    <img src="{{ Storage::url($existingImage) }}" alt="Current image"
-                                        class="h-12 w-12 object-cover rounded">
-                                    <span class="text-sm text-gray-600">Current image</span>
-                                </div>
-                                @endif
-
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    @if($itemId)
-                                    <input type="hidden" name="items[{{ $key }}][id]" value="{{ $itemId }}">
-                                    @endif
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                                        <input type="text" name="items[{{ $key }}][title]"
-                                            class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0 bg-white"
-                                            value="{{ $itemData['title'] ?? $itemData->title ?? '' }}" required>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
-                                        <input type="text" name="items[{{ $key }}][subtitle]"
-                                            class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0 bg-white"
-                                            value="{{ $itemData['subtitle'] ?? $itemData->subtitle ?? '' }}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
-                                        <input type="file" name="items[{{ $key }}][image]"
-                                            class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0 bg-white"
-                                            accept="image/*">
-                                        @if($existingImage)
-                                        <input type="hidden" name="items[{{ $key }}][existing_image]"
-                                            value="{{ $existingImage }}">
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                            @endif
-                            @endfor
-                            @endif
+                    <div id="slider_items_container" class="space-y-2">
+                        <!-- Existing items will be loaded here by JavaScript -->
                     </div>
                 </div>
 
                 <!-- Form Actions -->
                 <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
                     <a href="{{ route('admin.home-sections.index') }}"
-                        class="px-4 py-2 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 text-sm">
+                        class="px-6 py-3 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium">
                         Cancel
                     </a>
-                    <button type="submit" class="px-4 py-2 bg-black text-white hover:bg-gray-800 text-sm">
-                        Update Section
+                    <button type="submit" class="px-6 py-3 bg-black text-white hover:bg-gray-800 text-sm font-medium">
+                        Update Home Section
                     </button>
                 </div>
             </form>
@@ -210,119 +169,229 @@
 
 @push('scripts')
 <script>
-    let itemIndex = {{ $itemCount }};
+    let itemIndex = 0;
+let selectedChildCategories = new Set();
+let childCategories = @json($childCategories);
+let oldItems = @json(old('items', []));
+let existingItems = @json($existingItems);
 
-    function addItem() {
-        if (itemIndex >= 4) {
-            alert('Maximum 4 slider items allowed');
-            return;
-        }
+function addItem(itemData = {}) {
+    const container = document.getElementById('slider_items_container');
+    const itemDiv = document.createElement('div');
+    itemDiv.classList.add('bg-white', 'item-row');
+    itemDiv.dataset.index = itemIndex;
 
-        const container = document.getElementById('slider_items_container');
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'border border-gray-200 p-4 bg-gray-50 rounded';
-        itemDiv.id = `item_${itemIndex}`;
+    // Get child categories for selected parent
+    const parentCategoryId = document.getElementById('category_id').value;
+    const filteredChildCategories = childCategories.filter(cat => cat.parent_id == parentCategoryId);
 
-        const isOnlyItem = container.children.length === 0;
-        
-        itemDiv.innerHTML = `
-            <div class="flex justify-between items-center mb-3 pb-3 border-b border-gray-200">
-                <h4 class="font-medium text-gray-900">Item ${itemIndex + 1}</h4>
-                <button type="button" onclick="removeItem('item_${itemIndex}')" 
-                        class="text-red-600 hover:text-red-800 p-1 ${isOnlyItem ? 'opacity-50 cursor-not-allowed' : ''}"
-                        ${isOnlyItem ? 'disabled' : ''}>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    const childCategoryOptions = filteredChildCategories.map(cat => 
+        `<option value="${cat.id}" ${itemData.category_id == cat.id ? 'selected' : ''}>${cat.category_name}</option>`
+    ).join('');
+
+    itemDiv.innerHTML = `
+        <div class="flex flex-wrap items-end gap-2">
+            
+            <!-- Child Category -->
+            <div class="w-48">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Child Category *</label>
+                <select name="items[${itemIndex}][category_id]" 
+                        class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0 child-category-select" required>
+                    <option value="">Select</option>
+                    ${childCategoryOptions}
+                </select>
+                <div class="text-red-500 text-xs mt-1 duplicate-warning hidden">This category is already selected</div>
+            </div>
+
+            <!-- Title -->
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <input type="text" name="items[${itemIndex}][title]" 
+                    value="${itemData.title || ''}"
+                    class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0 item-title" required>
+            </div>
+
+            <!-- Subtitle -->
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                <input type="text" name="items[${itemIndex}][subtitle]" 
+                    value="${itemData.subtitle || ''}"
+                    class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0">
+            </div>
+
+            <!-- Image -->
+            <div class="w-48">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Image ${itemData.item_id ? '' : '*'}</label>
+                ${itemData.image_url ? `<img src="${itemData.image_url}" alt="Item Image" class="h-10 w-10 object-cover">` : ''}
+                <input type="file" name="items[${itemIndex}][image]" 
+                    class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0" accept="image/*" ${itemData.item_id ? '' : 'required'}>
+                
+            </div>
+
+            <!-- Remove Button and Item ID -->
+            <div class="flex items-center space-x-2">
+                ${itemData.item_id ? `<input type="hidden" name="items[${itemIndex}][item_id]" value="${itemData.item_id}">` : ''}
+                <button type="button" onclick="removeItem(${itemIndex})" 
+                        class="text-red-600 hover:text-red-800 ${container.children.length === 0 ? 'hidden' : ''}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                     </svg>
                 </button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                    <input type="text" name="items[${itemIndex}][title]" 
-                           class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0 bg-white" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
-                    <input type="text" name="items[${itemIndex}][subtitle]" 
-                           class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0 bg-white">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
-                    <input type="file" name="items[${itemIndex}][image]" 
-                           class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0 bg-white" 
-                           accept="image/*">
-                </div>
-            </div>
-        `;
+        </div>
+    `;
 
-        container.appendChild(itemDiv);
-        itemIndex++;
-        updateDeleteButtons();
+    container.appendChild(itemDiv);
+    
+    // Initialize category validation
+    const categorySelect = itemDiv.querySelector('.child-category-select');
+    const titleInput = itemDiv.querySelector('.item-title');
+
+    if (categorySelect.value) {
+        selectedChildCategories.add(categorySelect.value);
+        validateChildCategories();
     }
-
-    function removeItem(id) {
-        const container = document.getElementById('slider_items_container');
-        if (container.children.length <= 1) {
-            alert('At least one slider item is required');
-            return;
+    
+    // Auto-set Title based on selected child category
+    categorySelect.addEventListener('change', function() {
+        const selectedCat = childCategories.find(cat => cat.id == this.value);
+        if (selectedCat && !titleInput.value) {
+            titleInput.value = selectedCat.category_name;
         }
+        validateChildCategories();
+    });
 
-        document.getElementById(id).remove();
-        itemIndex--;
-        
-        const items = container.children;
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-            item.id = `item_${i}`;
-            
-            const inputs = item.querySelectorAll('input');
-            inputs.forEach(input => {
-                const name = input.getAttribute('name');
-                if (name) {
-                    if (name.includes('[id]')) {
-                        input.name = `items[${i}][id]`;
-                    } else if (name.includes('[title]')) {
-                        input.name = `items[${i}][title]`;
-                    } else if (name.includes('[subtitle]')) {
-                        input.name = `items[${i}][subtitle]`;
-                    } else if (name.includes('[image]')) {
-                        input.name = `items[${i}][image]`;
-                    } else if (name.includes('[existing_image]')) {
-                        input.name = `items[${i}][existing_image]`;
-                    }
-                }
-            });
-            
-            item.querySelector('h4').textContent = `Item ${i + 1}`;
-            item.querySelector('button').onclick = () => removeItem(item.id);
+    itemIndex++;
+    updateRemoveButtons();
+}
+
+function removeItem(index) {
+    const item = document.querySelector(`.item-row[data-index="${index}"]`);
+    if (item) {
+        const categorySelect = item.querySelector('.child-category-select');
+        if (categorySelect && categorySelect.value) {
+            selectedChildCategories.delete(categorySelect.value);
         }
-        
-        updateDeleteButtons();
+        item.remove();
+        validateChildCategories();
+        updateRemoveButtons();
     }
+}
 
-    function updateDeleteButtons() {
-        const container = document.getElementById('slider_items_container');
-        const items = container.children;
-        const hasMultipleItems = items.length > 1;
-        
-        for (let i = 0; i < items.length; i++) {
-            const deleteBtn = items[i].querySelector('button');
-            if (hasMultipleItems) {
-                deleteBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                deleteBtn.disabled = false;
+function updateRemoveButtons() {
+    const items = document.querySelectorAll('.item-row');
+    const removeButtons = document.querySelectorAll('button[onclick^="removeItem"]');
+    
+    if (items.length <= 1) {
+        removeButtons.forEach(btn => btn.classList.add('hidden'));
+    } else {
+        removeButtons.forEach(btn => btn.classList.remove('hidden'));
+    }
+}
+
+function validateChildCategories() {
+    const allSelects = document.querySelectorAll('.child-category-select');
+    const selectedValues = new Set();
+    let hasDuplicates = false;
+
+    // Reset all warnings
+    document.querySelectorAll('.duplicate-warning').forEach(warning => {
+        warning.classList.add('hidden');
+    });
+    document.getElementById('duplicateWarning').classList.add('hidden');
+
+    // Check for duplicates
+    allSelects.forEach(select => {
+        const value = select.value;
+        if (value) {
+            if (selectedValues.has(value)) {
+                hasDuplicates = true;
+                const warning = select.parentNode.querySelector('.duplicate-warning');
+                warning.classList.remove('hidden');
             } else {
-                deleteBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                deleteBtn.disabled = true;
+                selectedValues.add(value);
             }
         }
+    });
+
+    // Show global warning
+    if (hasDuplicates) {
+        document.getElementById('duplicateWarning').classList.remove('hidden');
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const addItemBtn = document.getElementById('add_slider_item');
-        if (addItemBtn) addItemBtn.addEventListener('click', addItem);
-        updateDeleteButtons();
+    return !hasDuplicates;
+}
+
+function updateChildCategories() {
+    const parentCategoryId = document.getElementById('category_id').value;
+    const filteredChildCategories = childCategories.filter(cat => cat.parent_id == parentCategoryId);
+    
+    document.querySelectorAll('.child-category-select').forEach(select => {
+        const currentValue = select.value;
+        const options = filteredChildCategories.map(cat => 
+            `<option value="${cat.id}" ${currentValue == cat.id ? 'selected' : ''}>${cat.category_name}</option>`
+        ).join('');
+        
+        select.innerHTML = '<option value="">Select Child Category</option>' + options;
+
+        // Auto update title if selected and title is empty
+        const titleInput = select.closest('.item-row').querySelector('.item-title');
+        const selectedCat = childCategories.find(cat => cat.id == select.value);
+        if (selectedCat && !titleInput.value) {
+            titleInput.value = selectedCat.category_name;
+        }
     });
+    
+    validateChildCategories();
+}
+
+// Event Listeners
+document.getElementById('category_id').addEventListener('change', function() {
+    if (document.getElementById('type').value === 'fashion') {
+        updateChildCategories();
+    }
+});
+
+document.getElementById('add_item').addEventListener('click', function() {
+    if (validateChildCategories()) {
+        addItem();
+    } else {
+        alert('Please resolve duplicate category selections before adding new items.');
+    }
+});
+
+document.getElementById('homeSectionForm').addEventListener('submit', function(e) {
+    @if($homeSection->type === 'fashion')
+        if (document.getElementById('slider_items_container').children.length === 0) {
+            e.preventDefault();
+            alert('At least one slider item is required for fashion sections.');
+            return;
+        }
+        
+        if (!validateChildCategories()) {
+            e.preventDefault();
+            alert('Please resolve duplicate child category selections before submitting.');
+            return;
+        }
+    @endif
+});
+
+// Initialize form
+document.addEventListener('DOMContentLoaded', function() {
+    @if($homeSection->type === 'fashion')
+        // Load existing items or old form data
+        if (oldItems.length > 0) {
+            oldItems.forEach(item => addItem(item));
+        } else if (existingItems.length > 0) {
+            existingItems.forEach(item => addItem(item));
+        } else {
+            addItem();
+        }
+        
+        updateChildCategories();
+        validateChildCategories();
+        updateRemoveButtons();
+    @endif
+});
 </script>
 @endpush

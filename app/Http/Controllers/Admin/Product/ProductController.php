@@ -33,7 +33,7 @@ class ProductController extends Controller
     public function create()
     {
         return view('admin.products.modals.create', [
-            'categories' => Category::active()->get(),
+            'categories' => Category::active()->hasParent()->get(),
             'brands' => Brand::active()->get(),
             'tags' => Tag::all(),
         ]);

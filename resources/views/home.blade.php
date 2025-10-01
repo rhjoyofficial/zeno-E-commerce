@@ -36,7 +36,7 @@
     productCart: false
 }">
     <!-- Preloader -->
-    @include('partials.preloader')
+    {{-- @include('partials.preloader') --}}
     @include('partials.loading-overlay')
     @include('components.notification')
     {{-- @include('components.dynamic-navigation') --}}
@@ -54,13 +54,13 @@
     {{--  --}}
     <hr>
     @endforeach
-    @include('frontend.new-arrivals')
-    <hr>
-    @include('frontend.mens-fashion')
-    <hr>
-    @include('frontend.womens-fashion')
-    <hr>
-    @include('frontend.kids-fashion')
+    {{-- @include('frontend.new-arrivals') --}}
+    {{-- <hr> --}}
+    {{-- @include('frontend.mens-fashion') --}}
+    {{-- <hr> --}}
+    {{-- @include('frontend.womens-fashion') --}}
+    {{-- <hr> --}}
+    {{-- @include('frontend.kids-fashion') --}}
     @include('partials.membership')
     <hr>
     @include('frontend.footer')

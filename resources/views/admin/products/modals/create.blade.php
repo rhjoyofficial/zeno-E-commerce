@@ -114,13 +114,13 @@
                                 class="text-red-500">*</span></label>
                         <div class="mt-1 relative ">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500 sm:text-sm">৳</span>
+                                <span class="text-gray-500 sm:text-sm">$</span>
                             </div>
                             <input type="text" step="0.01" min="0" id="price" name="price" value="{{ old('price') }}"
                                 required
                                 class="block w-full pl-7 pr-12 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                <span class="text-gray-500 sm:text-sm">BDT</span>
+                                <span class="text-gray-500 sm:text-sm">USD</span>
                             </div>
                         </div>
                     </div>

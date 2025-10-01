@@ -14,6 +14,8 @@ class HomeSection extends Model
         'type',
         'title',
         'subtitle',
+        'section_title',
+        'section_subtitle',
         'banner_image',
         'category_id',
         'status',

@@ -49,6 +49,7 @@ use App\Http\Controllers\Admin\Product\{
     ProductController as AdminProductController,
     ProductVariantController
 };
+use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
 
 // ==================== PUBLIC ROUTES ====================
@@ -247,6 +248,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('home-sections', HomeSectionController::class);
     Route::patch('home-sections/{homeSection}/toggle-status', [HomeSectionController::class, 'toggleStatus'])
         ->name('home-sections.toggleStatus');
+    Route::get('categories/{category}/children', function (Category $category) {
+        return $category->children()->select('id', 'category_name')->get();
+    })->name('categories.children');
 });
 
 // ==================== MISC ROUTES ====================

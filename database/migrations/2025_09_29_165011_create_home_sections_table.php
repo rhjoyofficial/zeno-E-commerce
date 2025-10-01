@@ -16,9 +16,10 @@ return new class extends Migration
             $table->string('type'); // e.g., 'new_arrivals', 'fashion'
             $table->string('title');
             $table->string('subtitle')->nullable();
+            $table->string('section_title')->nullable();
+            $table->string('section_subtitle')->nullable();
             $table->string('banner_image')->nullable();
             $table->unsignedBigInteger('category_id')->nullable(); 
-            // Link to categories for filtering products (e.g., Men's category)
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->integer('order')->default(0);
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();

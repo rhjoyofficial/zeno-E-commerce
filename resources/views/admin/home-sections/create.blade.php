@@ -7,65 +7,112 @@
         <div class="p-6 border-b border-gray-200">
             <h2 class="text-2xl font-bold text-gray-800">Create Home Section</h2>
         </div>
+
         <!-- Form Section -->
         <div class="p-6">
-            <form action="{{ route('admin.home-sections.store') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('admin.home-sections.store') }}" method="POST" enctype="multipart/form-data"
+                id="homeSectionForm">
                 @csrf
+
+                <!-- Display Validation Errors -->
+                @if($errors->any())
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
+                    <ul class="list-disc list-inside space-y-1">
+                        @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
+
                 <div class="flex flex-wrap -mx-2">
+                    <!-- Type Field -->
                     <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
-                        <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                        <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
                         <select name="type" id="type"
                             class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0" required>
                             <option value="new_arrivals" {{ old('type')=='new_arrivals' ? 'selected' : '' }}>New
                                 Arrivals</option>
-                            <option value="fashion" {{ old('type')=='fashion' ? 'selected' : '' }}>Fashion (e.g., Men's,
-                                Women's)</option>
+                            <option value="fashion" {{ old('type')=='fashion' ? 'selected' : '' }}>Fashion</option>
                         </select>
                     </div>
+
+                    <!-- Title Field -->
                     <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
-                        <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
                         <input type="text" name="title" id="title" value="{{ old('title') }}"
                             class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0" required>
                     </div>
+
+                    <!-- Subtitle Field -->
                     <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
                         <label for="subtitle" class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
                         <input type="text" name="subtitle" id="subtitle" value="{{ old('subtitle') }}"
                             class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0">
                     </div>
-                    <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
+
+                    <!-- Banner Image Field (Only for Fashion) -->
+                    <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4 fashion-field hidden">
                         <label for="banner_image" class="block text-sm font-medium text-gray-700 mb-1">Banner
                             Image</label>
                         <input type="file" name="banner_image" id="banner_image"
                             class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0">
+                        <p class="text-xs text-gray-500 mt-1">Recommended size: 1200x400px or larger</p>
                     </div>
-                    <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4 hidden" id="category_id_div">
-                        <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Linked Category
-                            (for product filtering)</label>
+
+                    <!-- Section Title Field (Only for Fashion) -->
+                    <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4 fashion-field hidden">
+                        <label for="section_title" class="block text-sm font-medium text-gray-700 mb-1">Section
+                            Title</label>
+                        <input type="text" name="section_title" id="section_title" value="{{ old('section_title') }}"
+                            class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0">
+                    </div>
+
+                    <!-- Section Subtitle Field (Only for Fashion) -->
+                    <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4 fashion-field hidden">
+                        <label for="section_subtitle" class="block text-sm font-medium text-gray-700 mb-1">Section
+                            Subtitle</label>
+                        <input type="text" name="section_subtitle" id="section_subtitle"
+                            value="{{ old('section_subtitle') }}"
+                            class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0">
+                    </div>
+
+                    <!-- Parent Category Field (Only for Fashion) -->
+                    <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4 fashion-field hidden">
+                        <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Parent Category
+                            *</label>
                         <select name="category_id" id="category_id"
                             class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0">
-                            @foreach ($categories as $cat)
-                            <option value="{{ $cat->id }}" {{ old('category_id')==$cat->id ? 'selected' : '' }}>{{
-                                $cat->category_name }}</option>
+                            <option value="">Select Parent Category</option>
+                            @foreach ($parentCategories as $category)
+                            <option value="{{ $category->id }}" {{ old('category_id')==$category->id ? 'selected' : ''
+                                }}>
+                                {{ $category->category_name }}
+                            </option>
                             @endforeach
                         </select>
                     </div>
+
+                    <!-- Status Field -->
                     <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
-                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
                         <select name="status" id="status"
                             class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0" required>
-                            <option value="active" {{ old('status')=='active' ? 'selected' : '' }}>Active</option>
-                            <option value="inactive" {{ old('status', 'active' )=='inactive' ? 'selected' : '' }}>
-                                Inactive</option>
+                            <option value="active" {{ old('status', 'active' )=='active' ? 'selected' : '' }}>Active
+                            </option>
+                            <option value="inactive" {{ old('status')=='inactive' ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
+
+                    <!-- Order Field -->
                     <div class="w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
-                        <label for="order" class="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                        <label for="order" class="block text-sm font-medium text-gray-700 mb-1">Order *</label>
                         <input type="number" name="order" id="order" value="{{ old('order', 0) }}"
-                            class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0" min="0">
+                            class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0" min="0" required>
                     </div>
                 </div>
 
-                <!-- Slider Items Section -->
+                <!-- Slider Items Section (Only for Fashion) -->
                 <div id="slider_items" class="hidden mt-8 border-t border-gray-200 pt-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-medium text-gray-900">Slider Items</h3>
@@ -78,7 +125,13 @@
                             Add Item
                         </button>
                     </div>
-                    <div id="slider_items_container" class="space-y-4"></div>
+
+                    <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded hidden" id="duplicateWarning">
+                        <p class="text-yellow-700 text-sm">Warning: You have selected the same child category multiple
+                            times.</p>
+                    </div>
+
+                    <div id="slider_items_container" class="space-y-2"></div>
                 </div>
 
                 <!-- Form Actions -->
@@ -100,179 +153,238 @@
 @push('scripts')
 <script>
     let itemIndex = 0;
+    let selectedChildCategories = new Set();
+    let childCategories = @json($childCategories);
     let oldItems = @json(old('items', []));
 
     function addItem(itemData = {}) {
-        if (itemIndex >= 4) {
-            alert('Maximum 4 slider items allowed');
-            return;
-        }
-
         const container = document.getElementById('slider_items_container');
         const itemDiv = document.createElement('div');
-        itemDiv.classList.add('border', 'border-gray-200', 'p-4', 'relative', 'bg-gray-50');
-        itemDiv.id = `item_${itemIndex}`;
+        itemDiv.classList.add('bg-white', 'item-row');
+        itemDiv.dataset.index = itemIndex;
 
-        // Check if this is the only item
-        const isOnlyItem = container.children.length === 0;
-        
-        // Header with item number and delete button
-        const headerDiv = document.createElement('div');
-        headerDiv.classList.add('flex', 'justify-between', 'items-center', 'mb-4', 'pb-2', 'border-b', 'border-gray-200');
-        headerDiv.innerHTML = `
-            <h4 class="font-medium text-gray-900">Slider Item ${itemIndex + 1}</h4>
-            <button type="button" onclick="removeItem('${itemDiv.id}')" 
-                    class="text-red-600 hover:text-red-800 p-1 ${isOnlyItem ? 'opacity-50 cursor-not-allowed' : ''}"
-                    ${isOnlyItem ? 'disabled' : ''}>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-            </button>
+        // Get child categories for selected parent
+        const parentCategoryId = document.getElementById('category_id').value;
+        const filteredChildCategories = childCategories.filter(cat => cat.parent_id == parentCategoryId);
+
+        const childCategoryOptions = filteredChildCategories.map(cat => 
+            `<option value="${cat.id}" ${itemData.category_id == cat.id ? 'selected' : ''}>${cat.category_name}</option>`
+        ).join('');
+
+        itemDiv.innerHTML = `
+            <div class="flex flex-wrap items-end gap-2">
+                
+                <!-- Child Category -->
+                <div class="w-48">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Child Category *</label>
+                    <select name="items[${itemIndex}][category_id]" 
+                            class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0 child-category-select" required>
+                        <option value="">Select</option>
+                        ${childCategoryOptions}
+                    </select>
+                    <div class="text-red-500 text-xs mt-1 duplicate-warning hidden">This category is already selected</div>
+                </div>
+
+                <!-- Title -->
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                    <input type="text" name="items[${itemIndex}][title]" 
+                        value="${itemData.title || ''}"
+                        class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0 item-title" required>
+                </div>
+
+                <!-- Subtitle -->
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                    <input type="text" name="items[${itemIndex}][subtitle]" 
+                        value="${itemData.subtitle || ''}"
+                        class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0">
+                </div>
+
+                <!-- Image -->
+                <div class="w-48">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Image *</label>
+                    <input type="file" name="items[${itemIndex}][image]" 
+                        class="w-full border border-gray-300 p-2 focus:border-black focus:ring-0" accept="image/*" required>
+                </div>
+
+                <!-- Remove Button -->
+                <div class="flex items-center">
+                    <button type="button" onclick="removeItem(${itemIndex})" 
+                            class="text-red-600 hover:text-red-800 ${container.children.length === 0 ? 'hidden' : ''}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                    </button>
+                </div>
+            </div>
         `;
-        itemDiv.appendChild(headerDiv);
 
-        // Form fields
-        const flexDiv = document.createElement('div');
-        flexDiv.classList.add('flex', 'flex-wrap', '-mx-2');
-
-        // Title
-        const titleDiv = document.createElement('div');
-        titleDiv.classList.add('w-full', 'sm:w-1/2', 'lg:w-1/3', 'px-2', 'mb-4');
-        titleDiv.innerHTML = `
-            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-            <input type="text" name="items[${itemIndex}][title]" 
-                   class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0" 
-                   placeholder="Enter item title" 
-                   value="${itemData.title || ''}"
-                   required>
-        `;
-        flexDiv.appendChild(titleDiv);
-
-        // Subtitle
-        const subDiv = document.createElement('div');
-        subDiv.classList.add('w-full', 'sm:w-1/2', 'lg:w-1/3', 'px-2', 'mb-4');
-        subDiv.innerHTML = `
-            <label class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
-            <input type="text" name="items[${itemIndex}][subtitle]" 
-                   class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0" 
-                   placeholder="Enter item subtitle"
-                   value="${itemData.subtitle || ''}">
-        `;
-        flexDiv.appendChild(subDiv);
-
-        // Image
-        const imgDiv = document.createElement('div');
-        imgDiv.classList.add('w-full', 'sm:w-1/2', 'lg:w-1/3', 'px-2', 'mb-4');
-        imgDiv.innerHTML = `
-            <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
-            <input type="file" name="items[${itemIndex}][image]" 
-                   class="w-full border border-gray-300 p-3 focus:border-black focus:ring-0" 
-                   accept="image/*" ${itemIndex === 0 && !itemData.title ? 'required' : ''}>
-            <p class="text-xs text-gray-500 mt-1">Recommended: 400x400px or larger</p>
-        `;
-        flexDiv.appendChild(imgDiv);
-
-        itemDiv.appendChild(flexDiv);
         container.appendChild(itemDiv);
-        itemIndex++;
         
-        updateDeleteButtons();
-    }
+        // Initialize category validation
+        const categorySelect = itemDiv.querySelector('.child-category-select');
+        const titleInput = itemDiv.querySelector('.item-title');
 
-    function removeItem(id) {
-        const container = document.getElementById('slider_items_container');
-        if (container.children.length <= 1) {
-            alert('At least one slider item is required for fashion sections');
-            return;
+        if (categorySelect.value) {
+            selectedChildCategories.add(categorySelect.value);
+            validateChildCategories();
         }
-
-        const element = document.getElementById(id);
-        if (element) {
-            element.remove();
-            itemIndex--;
-            
-            // Re-index remaining items
-            const items = container.children;
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
-                const newIndex = i;
-                item.id = `item_${newIndex}`;
-                
-                // Update input names
-                const inputs = item.querySelectorAll('input');
-                inputs[0].name = `items[${newIndex}][title]`;
-                inputs[1].name = `items[${newIndex}][subtitle]`;
-                inputs[2].name = `items[${newIndex}][image]`;
-                
-                // Update header title
-                const header = item.querySelector('h4');
-                header.textContent = `Slider Item ${newIndex + 1}`;
-                
-                // Update delete button onclick
-                const deleteBtn = item.querySelector('button');
-                deleteBtn.onclick = () => removeItem(item.id);
-            }
-            
-            updateDeleteButtons();
-        }
-    }
-
-    function updateDeleteButtons() {
-        const container = document.getElementById('slider_items_container');
-        const items = container.children;
-        const hasMultipleItems = items.length > 1;
         
-        for (let i = 0; i < items.length; i++) {
-            const deleteBtn = items[i].querySelector('button');
-            if (hasMultipleItems) {
-                deleteBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                deleteBtn.disabled = false;
+        // Auto-set Title based on selected child category
+        categorySelect.addEventListener('change', function() {
+            const selectedCat = childCategories.find(cat => cat.id == this.value);
+            if (selectedCat) {
+                titleInput.value = selectedCat.category_name;
             } else {
-                deleteBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                deleteBtn.disabled = true;
+                titleInput.value = '';
             }
+            validateChildCategories();
+        });
+
+        itemIndex++;
+        updateRemoveButtons();
+    }
+
+    function removeItem(index) {
+        const item = document.querySelector(`.item-row[data-index="${index}"]`);
+        if (item) {
+            const categorySelect = item.querySelector('.child-category-select');
+            if (categorySelect.value) {
+                selectedChildCategories.delete(categorySelect.value);
+            }
+            item.remove();
+            validateChildCategories();
+            updateRemoveButtons();
         }
     }
 
-    function resetSliderItems() {
-        const container = document.getElementById('slider_items_container');
-        container.innerHTML = '';
-        itemIndex = 0;
-        oldItems = [];
+    function updateRemoveButtons() {
+        const items = document.querySelectorAll('.item-row');
+        const removeButtons = document.querySelectorAll('button[onclick^="removeItem"]');
+        
+        if (items.length <= 1) {
+            removeButtons.forEach(btn => btn.classList.add('hidden'));
+        } else {
+            removeButtons.forEach(btn => btn.classList.remove('hidden'));
+        }
     }
 
+    function validateChildCategories() {
+        const allSelects = document.querySelectorAll('.child-category-select');
+        const selectedValues = new Set();
+        let hasDuplicates = false;
+
+        // Reset all warnings
+        document.querySelectorAll('.duplicate-warning').forEach(warning => {
+            warning.classList.add('hidden');
+        });
+        document.getElementById('duplicateWarning').classList.add('hidden');
+
+        // Check for duplicates
+        allSelects.forEach(select => {
+            const value = select.value;
+            if (value) {
+                if (selectedValues.has(value)) {
+                    hasDuplicates = true;
+                    const warning = select.parentNode.querySelector('.duplicate-warning');
+                    warning.classList.remove('hidden');
+                } else {
+                    selectedValues.add(value);
+                }
+            }
+        });
+
+        // Show global warning
+        if (hasDuplicates) {
+            document.getElementById('duplicateWarning').classList.remove('hidden');
+        }
+
+        return !hasDuplicates;
+    }
+
+    function updateChildCategories() {
+        const parentCategoryId = document.getElementById('category_id').value;
+        const filteredChildCategories = childCategories.filter(cat => cat.parent_id == parentCategoryId);
+        
+        document.querySelectorAll('.child-category-select').forEach(select => {
+            const currentValue = select.value;
+            const options = filteredChildCategories.map(cat => 
+                `<option value="${cat.id}" ${currentValue == cat.id ? 'selected' : ''}>${cat.category_name}</option>`
+            ).join('');
+            
+            select.innerHTML = '<option value="">Select Child Category</option>' + options;
+
+            // Auto update title if selected
+            const titleInput = select.closest('.item-row').querySelector('.item-title');
+            const selectedCat = childCategories.find(cat => cat.id == select.value);
+            if (selectedCat) {
+                titleInput.value = selectedCat.category_name;
+            } else {
+                titleInput.value = '';
+            }
+        });
+        
+        validateChildCategories();
+    }
+
+    // Event Listeners
     document.getElementById('type').addEventListener('change', function() {
         const isFashion = this.value === 'fashion';
-        const categoryDiv = document.getElementById('category_id_div');
+        const fashionFields = document.querySelectorAll('.fashion-field');
         const sliderItems = document.getElementById('slider_items');
 
         if (isFashion) {
-            categoryDiv.classList.remove('hidden');
+            fashionFields.forEach(field => field.classList.remove('hidden'));
             sliderItems.classList.remove('hidden');
             
-            // Add items from old data or create one default
-            if (oldItems.length > 0) {
-                oldItems.forEach(item => addItem(item));
-            } else if (document.getElementById('slider_items_container').children.length === 0) {
+            if (document.getElementById('slider_items_container').children.length === 0) {
                 addItem();
             }
         } else {
-            categoryDiv.classList.add('hidden');
+            fashionFields.forEach(field => field.classList.add('hidden'));
             sliderItems.classList.add('hidden');
-            resetSliderItems();
+            document.getElementById('slider_items_container').innerHTML = '';
+            itemIndex = 0;
+            selectedChildCategories.clear();
         }
     });
 
-    document.getElementById('add_item').addEventListener('click', () => addItem());
+    document.getElementById('category_id').addEventListener('change', function() {
+        if (document.getElementById('type').value === 'fashion') {
+            updateChildCategories();
+        }
+    });
 
-    // Initialize form based on current type and old data
+    document.getElementById('add_item').addEventListener('click', function() {
+        if (validateChildCategories()) {
+            addItem();
+        } else {
+            alert('Please resolve duplicate category selections before adding new items.');
+        }
+    });
+
+    document.getElementById('homeSectionForm').addEventListener('submit', function(e) {
+        if (document.getElementById('type').value === 'fashion') {
+            if (document.getElementById('slider_items_container').children.length === 0) {
+                e.preventDefault();
+                alert('At least one slider item is required for fashion sections.');
+                return;
+            }
+            
+            if (!validateChildCategories()) {
+                e.preventDefault();
+                alert('Please resolve duplicate child category selections before submitting.');
+                return;
+            }
+        }
+    });
+
+    // Initialize form
     document.addEventListener('DOMContentLoaded', function() {
         const currentType = document.getElementById('type').value;
-        const isFashion = currentType === 'fashion';
-        
-        if (isFashion) {
-            document.getElementById('category_id_div').classList.remove('hidden');
+        if (currentType === 'fashion') {
+            document.querySelectorAll('.fashion-field').forEach(field => field.classList.remove('hidden'));
             document.getElementById('slider_items').classList.remove('hidden');
             
             if (oldItems.length > 0) {
@@ -280,6 +392,8 @@
             } else {
                 addItem();
             }
+            
+            updateChildCategories();
         }
     });
 </script>

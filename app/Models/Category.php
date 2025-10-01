@@ -37,11 +37,19 @@ class Category extends Model
     {
         return $query->where('status', 'active');
     }
+    public function scopeHasParent($query)
+    {
+        return $query->whereNotNull('parent_id');
+    }
+    public function scopeHasNotParent($query)
+    {
+        return $query->whereNull('parent_id');
+    }
 
     public function getDescendantIds()
     {
         $ids = [$this->id];
-        $children = $this->children; 
+        $children = $this->children;
         foreach ($children as $child) {
             $ids = array_merge($ids, $child->getDescendantIds());
         }
