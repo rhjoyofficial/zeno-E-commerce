@@ -33,6 +33,29 @@ class HomeSection extends Model
     {
         return $this->belongsTo(Category::class);
     }
+    // In HomeSection model
+    public function products()
+    {
+        return $this->hasManyThrough(
+            Product::class,
+            Category::class,
+            'id',
+            'category_id',
+            'category_id',
+            'id'
+        );
+    }
+
+    // Scope for new arrivals
+    public function scopeNewArrivals($query)
+    {
+        return $query->where('type', 'new_arrivals');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
 
     // Helper to get products for the section
     public function getProducts()

@@ -42,7 +42,7 @@ return new class extends Migration
             $table->string('city', 100);
             $table->string('state', 100)->nullable();
             $table->string('country', 100);
-            $table->string('postal_code', 20);
+            $table->string('postal_code', 20)->nullable();
             $table->string('phone', 20)->nullable();
             $table->boolean('is_default')->default(false);
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();

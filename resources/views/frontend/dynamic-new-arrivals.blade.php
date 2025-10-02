@@ -12,7 +12,8 @@
         @foreach (App\Models\Category::whereNull('parent_id')->get() as $cat)
         <button onclick="filterProducts('{{ $cat->category_name }}', event)"
             class="px-6 py-4 bg-gray-100 text-black hover:bg-gray-800 hover:text-white text-base font-medium filter-btn uppercase tracking-[2px]">{{
-            $cat->category_name }}</button>
+            $cat->category_name }}
+        </button>
         @endforeach
     </div>
 
@@ -30,5 +31,28 @@
 </section>
 
 <script>
-    // Your existing filterProducts script
+    function filterProducts(category, event) {
+        // Remove active class from all buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active', 'bg-black', 'text-white');
+            btn.classList.add('bg-gray-100', 'text-black');
+        });
+
+        // Add active class to clicked button
+        event.target.classList.add('active', 'bg-black', 'text-white');
+        event.target.classList.remove('bg-gray-100', 'text-black');
+
+        // Get all product cards
+        const products = document.querySelectorAll('[data-categories]');
+
+        // Filter products
+        products.forEach(product => {
+            const categories = product.dataset.categories.split(' ');
+            if (category === 'all' || categories.includes(category)) {
+                product.classList.remove('hidden');
+            } else {
+                product.classList.add('hidden');
+            }
+        });
+    }
 </script>
