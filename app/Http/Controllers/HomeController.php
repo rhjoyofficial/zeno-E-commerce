@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\HomeSection;
 use App\Models\ProductCart;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,27 +19,10 @@ class HomeController extends Controller
             'name' => Auth::user()->name,
             'email' => Auth::user()->email,
         ] : null;
-        $products = Product::with(['primaryImage', 'category', 'tags'])
-            ->active()
-            ->latest()
-            ->get()
-            ->map(function ($product) {                
-                return [
-                    'id'            => $product->id,
-                    'image'         => $product->image_path,
-                    'title'         => $product->title,
-                    'price'         => $product->price,
-                    'discountPrice'=> $product->discount_price ? $product->discount_price : null,
-                    'badge'         => $product->discount ? 'Sale' : 'New',
-                    'stock'         => $product->stock_quantity > 0,
-                    'categories'    => $product->category ? [$product->category->categoryName] : [],
-                    'tags'          => $product->tags->pluck('tag')->toArray(),
-                    'avg_rating'    => $product->avg_rating,
-                    'slug'          => $product->slug,
-                ];
-            });
-        $categories = Category::all();
-        return view('home', compact('products', 'categories', 'user'));
+
+        $homeSections = HomeSection::active()->orderBy('order')->get();
+        // dd($homeSections);
+        return view('home', compact('user', 'homeSections'));
     }
 
     public function aboutUs()

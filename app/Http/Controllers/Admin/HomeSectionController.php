@@ -9,6 +9,8 @@ use App\Models\HomeSectionItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\HomeSectionRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class HomeSectionController extends Controller
 {
@@ -20,115 +22,175 @@ class HomeSectionController extends Controller
 
     public function create()
     {
-        $categories = Category::whereNull('parent_id')->get();
-        // dd($categories);
-        return view('admin.home-sections.create', compact('categories'));
+        $parentCategories = Category::whereNull('parent_id')->get();
+        $childCategories = Category::whereNotNull('parent_id')->get();
+
+        return view('admin.home-sections.create', compact('parentCategories', 'childCategories'));
     }
 
     public function store(HomeSectionRequest $request)
     {
-        $validated = $request->validated();
+        try {
+            DB::beginTransaction();
 
-        if ($request->hasFile('banner_image')) {
-            $validated['banner_image'] = $request->file('banner_image')->store('home_sections', 'public');
-        }
+            $data = $request->validated();
+            $data['created_by'] = Auth::id();
 
-        $section = HomeSection::create($validated);
-
-        // Handle slider items if fashion
-        if ($request->type === 'fashion') {
-            foreach ($request->input('items', []) as $index => $itemData) {
-                $imagePath = $request->file("items.$index.image")->store('home_section_items', 'public');
-                HomeSectionItem::create([
-                    'home_section_id' => $section->id,
-                    'title' => $itemData['title'],
-                    'subtitle' => $itemData['subtitle'] ?? null,
-                    'image' => $imagePath,
-                ]);
+            // Handle banner image upload for fashion type
+            if ($request->type === 'fashion' && $request->hasFile('banner_image')) {
+                $data['banner_image'] = $request->file('banner_image')->store('home-sections', 'public');
             }
-        }
 
-        return redirect()->route('admin.home-sections.index')->with('success', 'Section created.');
+            $homeSection = HomeSection::create($data);
+
+            // Create slider items for fashion type
+            if ($request->type === 'fashion' && $request->has('items')) {
+                foreach ($request->items as $itemData) {
+                    if (isset($itemData['image'])) {
+                        $itemData['image'] = $itemData['image']->store('home-section-items', 'public');
+                    }
+                    $itemData['home_section_id'] = $homeSection->id;
+                    $itemData['created_by'] = Auth::id();
+
+                    HomeSectionItem::create($itemData);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.home-sections.index')
+                ->with('success', 'Home section created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error creating home section: ' . $e->getMessage());
+        }
     }
 
     public function edit(HomeSection $homeSection)
     {
-        $categories = Category::whereNull('parent_id')->get();
-        $itemCount = $homeSection->items->count();
-        return view('admin.home-sections.edit', compact('homeSection', 'categories', 'itemCount'));
+        $parentCategories = Category::whereNull('parent_id')->get();
+        $childCategories = Category::whereNotNull('parent_id')->get();
+
+        // Prepare existing items data for JavaScript
+        $existingItems = [];
+        if ($homeSection->type === 'fashion') {
+            $existingItems = $homeSection->items->map(function ($item) {
+                return [
+                    'item_id' => $item->id,
+                    'title' => $item->title,
+                    'subtitle' => $item->subtitle,
+                    'category_id' => $item->category_id,
+                    'image_url' => $item->image ? asset('storage/' . $item->image) : null,
+                    'status' => $item->status,
+                    'order' => $item->order
+                ];
+            })->toArray();
+        }
+
+        return view('admin.home-sections.edit', compact('homeSection', 'parentCategories', 'childCategories', 'existingItems'));
     }
 
     public function update(HomeSectionRequest $request, HomeSection $homeSection)
     {
-        $validated = $request->validated();
-        // dd($validated);
-        // Handle banner image replacement
-        if ($request->hasFile('banner_image')) {
-            if ($homeSection->banner_image) {
-                Storage::delete('public/' . $homeSection->banner_image);
+        try {
+            DB::beginTransaction();
+
+            $data = $request->validated();
+            $data['updated_by'] = Auth::id();
+
+            // Handle banner image upload
+            if ($request->hasFile('banner_image')) {
+                // Delete old banner image if exists
+                if ($homeSection->banner_image) {
+                    Storage::disk('public')->delete($homeSection->banner_image);
+                }
+                $data['banner_image'] = $request->file('banner_image')->store('home-sections', 'public');
+            } elseif ($request->type === 'new_arrivals' && $homeSection->banner_image) {
+                // Remove banner image if switching from fashion to new arrivals
+                Storage::disk('public')->delete($homeSection->banner_image);
+                $data['banner_image'] = null;
             }
-            $validated['banner_image'] = $request->file('banner_image')->store('home_sections', 'public');
-        }
 
-        $homeSection->update($validated);
+            $homeSection->update($data);
 
-        // Handle slider items if fashion
-        if ($homeSection->type === 'fashion') {
-            $submittedItems = $request->input('items', []);
-            $existingItems = $homeSection->items->keyBy('id');
+            // Handle slider items for fashion type
+            if ($homeSection->type === 'fashion' && $request->has('items')) {
+                $existingItemIds = [];
 
-            $keepIds = [];
+                foreach ($request->items as $itemData) {
+                    $itemData['home_section_id'] = $homeSection->id;
 
-            foreach ($submittedItems as $index => $itemData) {
-                $itemId = $itemData['id'] ?? null;
+                    // Check if this is an existing item (has item_id)
+                    if (isset($itemData['item_id']) && $itemData['item_id']) {
+                        $item = HomeSectionItem::where('home_section_id', $homeSection->id)
+                            ->where('id', $itemData['item_id'])
+                            ->first();
 
-                if ($itemId && $existingItems->has($itemId)) {
-                    // Update existing item
-                    $item = $existingItems[$itemId];
+                        if ($item) {
+                            // Handle image update
+                            if (isset($itemData['image']) && $itemData['image'] instanceof \Illuminate\Http\UploadedFile) {
+                                // Delete old image
+                                if ($item->image) {
+                                    Storage::disk('public')->delete($item->image);
+                                }
+                                $itemData['image'] = $itemData['image']->store('home-section-items', 'public');
+                            } else {
+                                // Keep existing image
+                                $itemData['image'] = $item->image;
+                            }
 
-                    // Replace image only if new one uploaded
-                    if ($request->hasFile("items.$index.image")) {
-                        if ($item->image) {
-                            Storage::delete('public/' . $item->image);
+                            $itemData['updated_by'] = Auth::id();
+                            $item->update($itemData);
+                            $existingItemIds[] = $item->id;
                         }
-                        $itemData['image'] = $request->file("items.$index.image")->store('home_section_items', 'public');
                     } else {
-                        // Keep existing image
-                        $itemData['image'] = $item->image;
-                    }
+                        // New item
+                        if (isset($itemData['image'])) {
+                            $itemData['image'] = $itemData['image']->store('home-section-items', 'public');
+                        }
+                        $itemData['created_by'] = Auth::id();
 
-                    $item->update([
-                        'title' => $itemData['title'],
-                        'subtitle' => $itemData['subtitle'] ?? null,
-                        'image' => $itemData['image'],
-                    ]);
-
-                    $keepIds[] = $itemId;
-                } else {
-                    // Create new item
-                    if ($request->hasFile("items.$index.image")) {
-                        $imagePath = $request->file("items.$index.image")->store('home_section_items', 'public');
-                        $newItem = HomeSectionItem::create([
-                            'home_section_id' => $homeSection->id,
-                            'title' => $itemData['title'],
-                            'subtitle' => $itemData['subtitle'] ?? null,
-                            'image' => $imagePath,
-                        ]);
-                        $keepIds[] = $newItem->id;
+                        $newItem = HomeSectionItem::create($itemData);
+                        $existingItemIds[] = $newItem->id;
                     }
+                }
+
+                // Delete items that were removed
+                $itemsToDelete = HomeSectionItem::where('home_section_id', $homeSection->id)
+                    ->whereNotIn('id', $existingItemIds)
+                    ->get();
+
+                foreach ($itemsToDelete as $itemToDelete) {
+                    if ($itemToDelete->image) {
+                        Storage::disk('public')->delete($itemToDelete->image);
+                    }
+                    $itemToDelete->delete();
+                }
+            } elseif ($homeSection->type === 'new_arrivals') {
+                // Delete all items if switching from fashion to new arrivals
+                $itemsToDelete = HomeSectionItem::where('home_section_id', $homeSection->id)->get();
+                foreach ($itemsToDelete as $itemToDelete) {
+                    if ($itemToDelete->image) {
+                        Storage::disk('public')->delete($itemToDelete->image);
+                    }
+                    $itemToDelete->delete();
                 }
             }
 
-            // Delete items not included in request
-            $homeSection->items()->whereNotIn('id', $keepIds)->each(function ($item) {
-                if ($item->image) {
-                    Storage::delete('public/' . $item->image);
-                }
-                $item->delete();
-            });
-        }
+            DB::commit();
 
-        return redirect()->route('admin.home-sections.index')->with('success', 'Section updated.');
+            return redirect()->route('admin.home-sections.index')
+                ->with('success', 'Home section updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error updating home section: ' . $e->getMessage());
+        }
     }
 
 

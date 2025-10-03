@@ -96,6 +96,10 @@ class Product extends Model
     {
         return $this->hasMany(ProductSlider::class);
     }
+    public function scopeNewArrivals($query)
+    {
+        return $query->where('is_new_arrival', true);
+    }
     public function scopeById($query, $productId)
     {
         return $query->where('id', $productId);

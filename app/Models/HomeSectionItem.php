@@ -11,10 +11,12 @@ class HomeSectionItem extends Model
 
     protected $fillable = [
         'home_section_id',
+        'category_id',
         'title',
         'subtitle',
         'image',
         'order',
+        'status',
         'created_by',
         'updated_by'
     ];

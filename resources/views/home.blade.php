@@ -44,23 +44,17 @@
     @include('frontend.navbar')
     @include('partials.flash-messages')
     @include('frontend.heroSection')
-    {{--  --}}
-    @foreach (App\Models\HomeSection::where('status', 'active')->orderBy('order')->get() as $section)
+    {{-- --}}
+
+    @foreach ($homeSections as $section)
     @if ($section->type === 'new_arrivals')
     @include('frontend.dynamic-new-arrivals', ['section' => $section])
     @elseif ($section->type === 'fashion')
     @include('frontend.dynamic-fashion', ['section' => $section])
     @endif
-    {{--  --}}
     <hr>
     @endforeach
-    @include('frontend.new-arrivals')
-    <hr>
-    @include('frontend.mens-fashion')
-    <hr>
-    @include('frontend.womens-fashion')
-    <hr>
-    @include('frontend.kids-fashion')
+
     @include('partials.membership')
     <hr>
     @include('frontend.footer')
@@ -68,223 +62,211 @@
 
     <div id="notification-container" class="fixed top-20 right-4 z-[9999] space-y-3 w-80 max-w-[90vw]"></div>
 
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('slider', (config) => ({
-                categories: config.categories,
-                progress: 0,
-                activeCategory: 0,
-                itemWidth: 0,
-                visibleItems: 3,
-                maxScroll: 0,
-                totalItems: 0,
-
-                init() {
-                    this.$nextTick(() => {
-                        this.calculateDimensions();
-                        // Update progress after scroll animation completes
-                        this.$refs.slider.addEventListener('scroll', this.updateProgress.bind(
-                            this));
-                        window.addEventListener('resize', this.calculateDimensions.bind(this));
-                    });
-                },
-
-                calculateDimensions() {
-                    const slider = this.$refs.slider;
-                    if (!slider || !slider.children[0]) return;
-
-                    this.itemWidth = slider.children[0].offsetWidth + 16;
-                    this.visibleItems = Math.floor(slider.clientWidth / this.itemWidth);
-                    this.maxScroll = slider.scrollWidth - slider.clientWidth;
-                    this.totalItems = slider.children.length;
-                    this.updateProgress();
-                },
-
-                updateProgress() {
-                    const slider = this.$refs.slider;
-                    if (!slider) return;
-
-                    const scrollLeft = slider.scrollLeft;
-                    this.maxScroll = slider.scrollWidth - slider.clientWidth;
-                    this.progress = this.maxScroll > 0 ? Math.min((scrollLeft / this.maxScroll) * 100,
-                        100) : 0;
-                    this.activeCategory = Math.round(scrollLeft / this.itemWidth);
-                },
-
-                scrollLeft() {
-                    const slider = this.$refs.slider;
-                    const scrollAmount = this.itemWidth * this.visibleItems;
-                    const newPosition = Math.max(slider.scrollLeft - scrollAmount, 0);
-
-                    slider.scrollTo({
-                        left: newPosition,
-                        behavior: 'smooth'
-                    });
-
-                    setTimeout(() => this.updateProgress(), 300);
-                },
-
-                scrollRight() {
-                    const slider = this.$refs.slider;
-                    const scrollAmount = this.itemWidth * this.visibleItems;
-                    const newPosition = Math.min(slider.scrollLeft + scrollAmount, this.maxScroll);
-
-                    slider.scrollTo({
-                        left: newPosition,
-                        behavior: 'smooth'
-                    });
-
-                    setTimeout(() => this.updateProgress(), 300);
-                },
-
-                goToCategory(category) {
-                    console.log('Selected category:', category);
-                }
-            }));
-        });
-    </script>
-
-    <!-- Include Swiper JS -->
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script>
-        const swiper = new Swiper('.swiper', {
-            // Optional parameters
-            direction: 'horizontal',
-            loop: true,
-            slidesPerView: 1,
-
-            // If you need pagination
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-
-            // Navigation arrows
-            // navigation: {
-            //     nextEl: '.swiper-button-next',
-            //     prevEl: '.swiper-button-prev',
-            // },
-            // Optional autoplay
-            autoplay: {
-                delay: 5000,
-            },
-        });
-    </script>
-
+    <!-- Scripts -->
     <script src="{{ asset('js/preloader.js') }}"></script>
     <script src="{{ asset('js/helper.js') }}"></script>
+    {{-- Swiper JS --}}
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- Progress Bar as Indicator (Non-interactive) ---
+            const progressBarThumb = document.querySelector('.custom-slider-thumb');
 
+            // Initial update to set the progress bar before Swiper init
+            if (progressBarThumb) {
+                progressBarThumb.style.width = '0%';
+            }
+
+            const fashionCategorySlider = new Swiper('.fashionCategorySlider', {
+                slidesPerView: 3,
+                spaceBetween: 24,
+                loop: false,
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                breakpoints: {
+                    640: {
+                        slidesPerView: 2,
+                        spaceBetween: 20,
+                    },
+                    768: {
+                        slidesPerView: 3,
+                        spaceBetween: 24,
+                    },
+                    1024: {
+                        slidesPerView: 3,
+                        spaceBetween: 24,
+                    },
+                },
+                on: {
+                    init: function () {
+                        console.log('Swiper initialized, updating progress bar');
+                        updateProgressBar(this);
+                    },
+                    slideChange: function () {
+                        updateProgressBar(this);
+                    },
+                    slideChangeTransitionEnd: function () {
+                        updateProgressBar(this);
+                    },
+                },
+            });
+
+            // Function to update the progress bar as an indicator of slides left
+            function updateProgressBar(swiperInstance) {
+                if (!progressBarThumb) return;
+
+                const totalSlides = swiperInstance.slides.length;
+                const slidesPerView = swiperInstance.params.slidesPerView;
+                const maxIndex = Math.max(0, totalSlides - slidesPerView);
+
+                console.log('Total slides:', totalSlides, 'Slides per view:', slidesPerView, 'Max index:', maxIndex);
+
+                if (maxIndex === 0) {
+                    // If all slides are visible, fill completely
+                    progressBarThumb.style.width = '100%';
+                    return;
+                }
+
+                const currentIndex = swiperInstance.activeIndex;
+                console.log('Current index:', currentIndex);
+
+                // NEW CALCULATION: Progress based on how much content we've viewed
+                // We start with some progress (since we're already viewing slidesPerView slides)
+                // and end at 100% when we reach the maximum scroll position
+
+                // Calculate how many slides we've "consumed" (viewed + scrolled past)
+                const consumedSlides = currentIndex + slidesPerView;
+
+                // Calculate progress based on total consumable content
+                const progressPercentage = (consumedSlides / totalSlides) * 100;
+
+                console.log('Consumed slides:', consumedSlides, 'Progress percentage:', progressPercentage);
+
+                // Update the progress bar width
+                progressBarThumb.style.width = `${Math.min(100, Math.max(0, progressPercentage))}%`;
+                console.log('Final width:', progressBarThumb.style.width);
+            }
+
+            // Force an initial update after a small delay to ensure Swiper is ready
+            setTimeout(() => {
+                updateProgressBar(fashionCategorySlider);
+            }, 100);
+        });
+    </script>
+    {{-- Swiper JS Fashion Slider Close --}}
     <!-- Global Config -->
     <script>
         window.appConfig = {
-        routes: {
-            productVariants: "{{ route('products.variants') }}",
-            cartAdd: "{{ route('cart.add') }}",
-        },
-        csrfToken: "{{ csrf_token() }}",
-    };
+            routes: {
+                productVariants: "{{ route('products.variants') }}",
+                cartAdd: "{{ route('cart.add') }}",
+            },
+            csrfToken: "{{ csrf_token() }}",
+        };
     </script>
     <script src="{{ asset('js/product-popup.js') }}"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-    // Update quantity
-    function updateQuantity(itemId, quantity) {
-        const url = '{{ route("cart.update", ":item") }}'.replace(':item', itemId);
-        
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ qty: quantity })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                notifications.success('Cart updated successfully');
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                notifications.error('Error updating cart');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            notifications.error('Error updating cart');
-        });    
-    }
+        document.addEventListener('DOMContentLoaded', function () {
+            // Update quantity
+            function updateQuantity(itemId, quantity) {
+                const url = '{{ route("cart.update", ":item") }}'.replace(':item', itemId);
 
-    // Remove item
-    function removeItem(itemId) {
-        const url = '{{ route("cart.remove", ":item") }}'.replace(':item', itemId);
-        
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ qty: quantity })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            notifications.success('Cart updated successfully');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            notifications.error('Error updating cart');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        notifications.error('Error updating cart');
+                    });
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                notifications.success('Item removed from cart');
-                document.querySelectorAll('.cart-counter').forEach(el => {
-                    el.textContent = data.cart_count;
+
+            // Remove item
+            function removeItem(itemId) {
+                const url = '{{ route("cart.remove", ":item") }}'.replace(':item', itemId);
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            notifications.success('Item removed from cart');
+                            document.querySelectorAll('.cart-counter').forEach(el => {
+                                el.textContent = data.cart_count;
+                            });
+
+                            document.querySelector(`.cart-item[data-id="${itemId}"]`).remove();
+
+                            if (document.querySelectorAll('.cart-item').length === 0) {
+                                setTimeout(() => location.reload(), 1000);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        notifications.error('Error removing item from cart');
+                    });
+            }
+
+            // Event listeners
+            document.querySelectorAll('.increase-qty').forEach(button => {
+                button.addEventListener('click', function () {
+                    const itemId = this.dataset.itemId;
+                    const input = this.parentNode.querySelector('.quantity-input');
+                    input.value = parseInt(input.value) + 1;
+                    updateQuantity(itemId, input.value);
                 });
-                
-                document.querySelector(`.cart-item[data-id="${itemId}"]`).remove();
-                
-                if (document.querySelectorAll('.cart-item').length === 0) {
-                    setTimeout(() => location.reload(), 1000);
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            notifications.error('Error removing item from cart');
-        });    
-    }
+            });
 
-    // Event listeners
-    document.querySelectorAll('.increase-qty').forEach(button => {
-        button.addEventListener('click', function() {
-            const itemId = this.dataset.itemId;
-            const input = this.parentNode.querySelector('.quantity-input');
-            input.value = parseInt(input.value) + 1;
-            updateQuantity(itemId, input.value);
-        });
-    });
+            document.querySelectorAll('.decrease-qty').forEach(button => {
+                button.addEventListener('click', function () {
+                    const itemId = this.dataset.itemId;
+                    const input = this.parentNode.querySelector('.quantity-input');
+                    if (input.value > 1) {
+                        input.value = parseInt(input.value) - 1;
+                        updateQuantity(itemId, input.value);
+                    }
+                });
+            });
 
-    document.querySelectorAll('.decrease-qty').forEach(button => {
-        button.addEventListener('click', function() {
-            const itemId = this.dataset.itemId;
-            const input = this.parentNode.querySelector('.quantity-input');
-            if (input.value > 1) {
-                input.value = parseInt(input.value) - 1;
-                updateQuantity(itemId, input.value);
-            }
-        });
-    });
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                input.addEventListener('change', function () {
+                    const itemId = this.dataset.itemId;
+                    if (this.value < 1) this.value = 1;
+                    updateQuantity(itemId, this.value);
+                });
+            });
 
-    document.querySelectorAll('.quantity-input').forEach(input => {
-        input.addEventListener('change', function() {
-            const itemId = this.dataset.itemId;
-            if (this.value < 1) this.value = 1;
-            updateQuantity(itemId, this.value);
+            document.querySelectorAll('.remove-item').forEach(button => {
+                button.addEventListener('click', function () {
+                    const itemId = this.dataset.itemId;
+                    if (confirm('Are you sure you want to remove this item from your cart?')) {
+                        removeItem(itemId);
+                    }
+                });
+            });
         });
-    });
-
-    document.querySelectorAll('.remove-item').forEach(button => {
-        button.addEventListener('click', function() {
-            const itemId = this.dataset.itemId;
-            if (confirm('Are you sure you want to remove this item from your cart?')) {
-                removeItem(itemId);
-            }
-        });
-    });
-});
     </script>
 
     @stack('scripts')
