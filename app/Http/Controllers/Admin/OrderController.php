@@ -5,63 +5,132 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    private const VALID_STATUSES = [
+        'pending', 'confirmed', 'processing',
+        'shipped', 'delivered', 'cancelled',
+        'refunded', 'partially_refunded', 'on_hold',
+    ];
+
+    public function index(Request $request)
     {
-        $orders = Order::latest()->paginate(20);
+        $query = Order::with(['user', 'shippingAddress'])
+            ->latest();
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        $orders = $query->paginate(20)->withQueryString();
+
         return view('admin.orders.index', compact('orders'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function show(Order $order)
     {
-        //
+        $order->load(['user', 'shippingAddress', 'orderItems']);
+
+        return view('admin.orders.show', compact('order'));
+    }
+
+    public function edit(Order $order)
+    {
+        // Edit view not yet built — reuse the show page which has inline status update
+        return redirect()->route('admin.orders.show', $order);
+    }
+
+    public function update(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'status'         => 'sometimes|in:' . implode(',', self::VALID_STATUSES),
+            'payment_status' => 'sometimes|in:pending,paid,partially_paid,refunded,failed',
+            'admin_notes'    => 'nullable|string|max:1000',
+            'tracking_number' => 'nullable|string|max:255',
+            'tracking_url'   => 'nullable|url|max:500',
+        ]);
+
+        $order->update($validated);
+
+        return redirect()->route('admin.orders.show', $order)
+            ->with('success', 'Order updated successfully.');
+    }
+
+    public function destroy(Order $order)
+    {
+        $order->delete();
+
+        return redirect()->route('admin.orders.index')
+            ->with('success', 'Order removed.');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Update only the status field — called via AJAX from the order list.
      */
-    public function store(Request $request)
+    public function updateStatus(Request $request, Order $order)
     {
-        //
+        $validated = $request->validate([
+            'status' => 'required|in:' . implode(',', self::VALID_STATUSES),
+        ]);
+
+        try {
+            $order->update(['status' => $validated['status']]);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Order status updated to ' . str_replace('_', ' ', $validated['status']),
+                    'status'  => $order->status,
+                ]);
+            }
+
+            return redirect()->route('admin.orders.show', $order)
+                ->with('success', 'Order status updated.');
+        } catch (\Exception $e) {
+            Log::error('Order status update failed: ' . $e->getMessage(), ['order_id' => $order->id]);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update status. Please try again.',
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', 'Failed to update status. Please try again.');
+        }
     }
 
     /**
-     * Display the specified resource.
+     * Return JSON + rendered HTML for the quick-view modal.
      */
-    public function show(string $id)
+    public function quickView(Order $order)
     {
-        //
-    }
+        $order->load(['shippingAddress', 'orderItems']);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+        $html = view('admin.orders.partials.quick-view', compact('order'))->render();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return response()->json([
+            'success' => true,
+            'order'   => [
+                'order_number' => $order->order_number,
+                'status'       => $order->status,
+                'total'        => $order->total,
+            ],
+            'html' => $html,
+        ]);
     }
 }

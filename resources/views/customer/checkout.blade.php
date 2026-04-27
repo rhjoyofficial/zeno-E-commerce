@@ -34,6 +34,16 @@
                 <h2 class="text-lg font-semibold py-4">Delivery Information</h2>
                 <form action="{{ route('checkout.store') }}" method="POST">
                     @csrf
+                    @guest
+                    <div class="relative w-full mb-6 mt-3">
+                        <label for="email"
+                            class="absolute -top-3 left-4 bg-white px-1 text-black text-base font-medium">
+                            Email Address*
+                        </label>
+                        <input type="email" name="email" id="email" placeholder="your@email.com" required
+                            class="w-full border border-[#8C8C8C] px-6 py-5 text-black text-base font-normal placeholder-[#8C8C8C] outline-none">
+                    </div>
+                    @endguest
                     <div class="grid grid-cols-2 gap-4 mb-6 mt-3">
                         <div class="relative">
                             <label for="full-name"
@@ -139,6 +149,8 @@
                         </p>
                     </div>
 
+                    <input type="hidden" name="coupon_code" id="coupon_code_input" value="">
+
                     <!-- Order Button -->
                     <button type="submit"
                         class="w-full bg-black text-white py-5 px-4 text-xl uppercase tracking-[2px] font-medium focus:outline-none focus:bg-gray-800 my-3">
@@ -189,27 +201,42 @@
                     <div class="flex justify-between items-center" x-data="{
                             showCouponField: false,
                             couponCode: '',
+                            applied: false,
                             applyCoupon() {
-                                alert(`Applying coupon: ${this.couponCode}`);
+                                if (!this.couponCode.trim()) return;
+                                document.getElementById('coupon_code_input').value = this.couponCode.trim().toUpperCase();
+                                this.applied = true;
+                                this.showCouponField = false;
+                            },
+                            removeCoupon() {
+                                this.couponCode = '';
+                                this.applied = false;
+                                document.getElementById('coupon_code_input').value = '';
                             }
                         }">
                         <span>Coupon discount</span>
-                        <template x-if="!showCouponField">
-                            <button @click="showCouponField = true"
+                        <template x-if="applied">
+                            <div class="flex gap-2 items-center text-sm">
+                                <span class="font-semibold text-green-700 uppercase" x-text="couponCode"></span>
+                                <button type="button" @click="removeCoupon()" class="text-red-500 hover:text-red-700 text-xs">✕ Remove</button>
+                            </div>
+                        </template>
+                        <template x-if="!applied && !showCouponField">
+                            <button type="button" @click="showCouponField = true"
                                 class="text-sm font-semibold underline hover:no-underline">
                                 Apply coupon
                             </button>
                         </template>
-                        <template x-if="showCouponField">
+                        <template x-if="!applied && showCouponField">
                             <div class="flex gap-2 items-center">
                                 <input type="text" placeholder="Enter code" x-model="couponCode"
                                     class="text-sm p-2 border border-black focus:outline-none focus:border-black w-32 uppercase"
-                                    maxlength="7">
-                                <button @click="applyCoupon()"
+                                    maxlength="50" @keydown.enter.prevent="applyCoupon()">
+                                <button type="button" @click="applyCoupon()"
                                     class="text-sm font-semibold underline hover:no-underline">
                                     Apply
                                 </button>
-                                <button @click="showCouponField = false; couponCode = ''"
+                                <button type="button" @click="showCouponField = false; couponCode = ''"
                                     class="text-sm font-semibold px-2 hover:bg-gray-100">
                                     ✕
                                 </button>
@@ -245,33 +272,34 @@
                             <!-- Product Item -->
                             <div class="flex gap-4 items-start py-4 border-t-2 border-gray-200">
                                 <div class="w-28 h-28 flex-shrink-0 bg-gray-100 overflow-hidden">
-                                    <img class="w-full h-full object-cover"
-                                        src="{{ asset('storage/' . $cartItem->product->primaryImage->image_path) }}"
-                                        alt="{{ $cartItem->product->title }}">
+                                    @if($cartItem->product->primaryImage)
+                                        <img class="w-full h-full object-cover"
+                                            src="{{ asset('storage/' . $cartItem->product->primaryImage->image_path) }}"
+                                            alt="{{ $cartItem->product->title }}">
+                                    @else
+                                        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                            </svg>
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="flex-1 min-w-0 font-semibold">
                                     <p class="font-semibold text-lg mb-1">{{ $cartItem->product->title }}</p>
 
-                                    @if ($cartItem->product->has_variants)
-                                    <p class="text-sm text-gray-800 mb-1">COLOR:
-                                        {{ $cartItem->variant->color->name }}</p>
-                                    <p class="text-sm text-gray-800 mb-1">SIZE:
-                                        {{ $cartItem->variant->size->name }}
-                                    </p>
+                                    @if ($cartItem->variant)
+                                    @if($cartItem->variant->color)
+                                    <p class="text-sm text-gray-800 mb-1">COLOR: {{ $cartItem->variant->color->name }}</p>
+                                    @endif
+                                    @if($cartItem->variant->size)
+                                    <p class="text-sm text-gray-800 mb-1">SIZE: {{ $cartItem->variant->size->name }}</p>
+                                    @endif
                                     <p class="text-sm text-gray-800 mb-1">QTY: {{ $cartItem->qty }}</p>
-                                    <p class="text-sm text-gray-800">PRICE: ${{ $cartItem->variant->price }}
-                                    </p>
+                                    <p class="text-sm text-gray-800">PRICE: ${{ number_format($cartItem->variant->discount_price ?? $cartItem->variant->price, 2) }}</p>
                                     @else
-                                    <p class="text-sm text-gray-800 mb-1">SIZE: Free Size</p>
-                                    <p class="text-sm text-gray-800 mb-1">COLOR: Random Color</p>
                                     <p class="text-sm text-gray-800 mb-1">QTY: {{ $cartItem->qty }}</p>
                                     <p class="text-sm text-gray-800">
-                                        PRICE: $
-                                        @if ($cartItem->product->discount)
-                                        {{ $cartItem->product->discount_price }}
-                                        @else
-                                        {{ $cartItem->product->price }}
-                                        @endif
+                                        PRICE: ${{ number_format($cartItem->product->discount_price ?? $cartItem->product->price, 2) }}
                                     </p>
                                     @endif
                                 </div>

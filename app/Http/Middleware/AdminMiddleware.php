@@ -8,8 +8,14 @@ class AdminMiddleware
 {
     public function handle($request, Closure $next)
     {
-        if (Auth::check() && Auth::user()->role->slug === 'admin') {
+        $user = Auth::user();
+
+        if ($user && $user->role?->slug === 'admin' && $user->status === 'active') {
             return $next($request);
+        }
+
+        if ($user && $user->status !== 'active') {
+            abort(403, 'Your account has been suspended.');
         }
 
         abort(403, 'Unauthorized access. Administrator privileges required.');

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OtpMail;
 use Illuminate\Support\Facades\Log;
@@ -40,11 +41,10 @@ class OtpService
 
         $otp = $this->generateSecureOtp();
         $token = Str::uuid()->toString();
-        // dd($user, $otp, $token);
         try {
             Mail::to($user->email)->send(new OtpMail($otp, $user, $token));
             $user->update([
-                'otp' => $otp,
+                'otp' => Hash::make($otp),
                 'otp_expires_at' => now()->addMinutes(self::OTP_EXPIRE_MINUTES),
                 'otp_attempts' => 0,
                 'otp_requests_today' => $user->otp_requests_today + 1,
@@ -88,38 +88,36 @@ class OtpService
 
     public function verifyOtp(User $user, string $enteredOtp, string $token): bool
     {
-        try {
-            if ($user->otp_verification_token !== $token) {
-                throw new Exception("Invalid verification token.");
-            }
-
-            if ($this->isUserBlocked($user)) {
-                throw new Exception("Account temporarily blocked. Try again later.");
-            }
-
-            if ($user->otp_attempts >= self::MAX_ATTEMPTS) {
-                $this->blockUser($user);
-                throw new Exception("Too many attempts. Account blocked for " . self::BLOCK_MINUTES . " minutes.");
-            }
-            
-            $isValid = $user->otp === $enteredOtp && now()->lt($user->otp_expires_at);
-
-            if (!$isValid) {
-                $user->increment('otp_attempts');
-                $user->refresh();
-                $remaining = self::MAX_ATTEMPTS - $user->otp_attempts;
-
-                throw new Exception("Invalid OTP. {$remaining} attempts left.");
-            }
-
-            $this->resetAttempts($user);
-            return true;
-        } catch (\Exception $e) {
-            throw $e;
+        if ($user->otp_verification_token !== $token) {
+            throw new Exception("Invalid verification token.");
         }
+
+        if ($this->isUserBlocked($user)) {
+            throw new Exception("Account temporarily blocked. Try again later.");
+        }
+
+        if ($user->otp_attempts >= self::MAX_ATTEMPTS) {
+            $this->blockUser($user);
+            throw new Exception("Too many attempts. Account blocked for " . self::BLOCK_MINUTES . " minutes.");
+        }
+
+        $isValid = $user->otp
+            && $user->otp_expires_at
+            && now()->lt($user->otp_expires_at)
+            && Hash::check($enteredOtp, $user->otp);
+
+        if (!$isValid) {
+            $user->increment('otp_attempts');
+            $user->refresh();
+            $remaining = self::MAX_ATTEMPTS - $user->otp_attempts;
+            throw new Exception("Invalid OTP. {$remaining} attempts left.");
+        }
+
+        $this->resetAttempts($user);
+        return true;
     }
 
-    protected function isUserBlocked(User $user): bool
+    public function isUserBlocked(User $user): bool
     {
         return $user->otp_blocked_until && now()->lt($user->otp_blocked_until);
     }

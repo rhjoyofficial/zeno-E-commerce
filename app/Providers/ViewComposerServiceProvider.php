@@ -22,8 +22,8 @@ class ViewComposerServiceProvider extends ServiceProvider
         });
 
         View::composer('*', function ($view) {
-        $cartCount = \App\Http\Controllers\Customer\CartController::getCartCountStatic();
-        $view->with('cartCount', $cartCount);
-    });
+            $cartCount = app(\App\Services\CartService::class)->getCartCount();
+            $view->with('cartCount', $cartCount);
+        });
     }
 }

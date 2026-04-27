@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\{
     HomeController,
     ProfileController,
-    TestingController
 };
 
 use App\Http\Controllers\Public\{
@@ -30,9 +29,6 @@ use App\Http\Controllers\Customer\{
     ProductController as CustomerProductController
 };
 
-use App\Http\Controllers\View\{
-    NavigationController
-};
 
 use App\Http\Controllers\Admin\{
     AdminDashboardController,
@@ -40,6 +36,7 @@ use App\Http\Controllers\Admin\{
     CategoryController,
     CustomerController,
     HomeSectionController,
+    NavigationController as AdminNavigationController,
     OrderController,
     ReportController,
     SettingController
@@ -99,8 +96,8 @@ Route::prefix('cart')->name('cart.')->controller(CartController::class)->group(f
 // Checkout
 Route::controller(CheckoutController::class)->name('checkout.')->group(function () {
     Route::post('/checkout', 'index')->name('index');
-    Route::post('/store', 'store')->name('store');
-    Route::post('/checkout/place-order', 'placeOrder')->name('placeOrder');
+    Route::post('/store', 'store')->name('store')->middleware('throttle:checkout');
+    Route::get('/order/confirmation/{order}', 'confirmation')->name('confirmation');
 });
 
 // ==================== AUTHENTICATION ROUTES ====================
@@ -109,31 +106,31 @@ Route::middleware('guest')->group(function () {
     // Registration
     Route::controller(RegisterController::class)->group(function () {
         Route::get('/register', 'showRegistrationForm')->name('register.form');
-        Route::post('/register', 'register')->name('register');
-    })->middleware('throttle:60,1');
+        Route::post('/register', 'register')->name('register')->middleware('throttle:register');
+    });
 
     // Login
     Route::controller(LoginController::class)->group(function () {
         Route::get('/login', 'showLoginForm')->name('login');
-        Route::post('/login', 'login');
-    })->middleware('throttle:5,1');
+        Route::post('/login', 'login')->middleware('throttle:5,1');
+    });
 
     // Password Reset
     Route::controller(PasswordResetLinkController::class)->group(function () {
         Route::get('/forgot-password', 'create')->name('password.request');
-        Route::post('/forgot-password', 'store')->name('password.email');
+        Route::post('/forgot-password', 'store')->name('password.email')->middleware('throttle:password-reset');
     });
 
     Route::controller(NewPasswordController::class)->group(function () {
         Route::get('/reset-password/{token}', 'create')->name('password.reset');
-        Route::post('/reset-password', 'store')->name('password.update');
+        Route::post('/reset-password', 'store')->name('password.update')->middleware('throttle:password-reset');
     });
 
     // OTP Verification
     Route::controller(OTPVerificationController::class)->group(function () {
         Route::get('/otp/verify/{token}', 'showOtpForm')->name('otp.verify');
-        Route::post('/otp/verify', 'verifyOtp')->name('otp.verify.post');
-        Route::post('/otp/resend/{token}', 'resendOtp')->name('otp.resend');
+        Route::post('/otp/verify', 'verifyOtp')->name('otp.verify.post')->middleware('throttle:otp-verify');
+        Route::post('/otp/resend/{token}', 'resendOtp')->name('otp.resend')->middleware('throttle:otp-resend');
         Route::get('/otp/resend/{email}', 'resendOtp')->name('otp.resend.get');
     });
 });
@@ -165,6 +162,8 @@ Route::middleware(['auth', 'customer'])->prefix('customer')->name('customer.')->
 
     // Wishlist
     Route::get('/wishlist', [WishlistController::class, 'getWishList'])->name('wishlist');
+    Route::post('/wishlist/add', [WishlistController::class, 'add'])->name('wishlist.add');
+    Route::delete('/wishlist/{product}', [WishlistController::class, 'remove'])->name('wishlist.remove');
 });
 
 // ==================== ADMIN ROUTES ====================
@@ -177,7 +176,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('brands', BrandController::class);
     Route::get('brands/{brand}/product/create', [AdminProductController::class, 'create'])
         ->name('brands.products.create');
-    Route::post('/brands/{brand}/update-status', [BrandController::class, 'updateStatus'])->name('admin.brands.update-status');
+    Route::post('/brands/{brand}/update-status', [BrandController::class, 'updateStatus'])->name('brands.update-status');
 
     // Categories
     Route::resource('categories', CategoryController::class);
@@ -225,6 +224,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Orders
     Route::resource('orders', OrderController::class);
+    Route::post('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::get('orders/{order}/quick-view', [OrderController::class, 'quickView'])->name('orders.quickView');
 
     // Reports
     Route::resource('reports', ReportController::class);
@@ -233,15 +234,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('settings', SettingController::class);
 
     // Navigation admin routes
-    Route::resource('navigation', 'Admin\NavigationController')->except(['show']);
+    Route::resource('navigation', AdminNavigationController::class)->except(['show']);
     Route::prefix('navigation/{menu}')->group(function () {
-        Route::post('items', 'Admin\NavigationController@storeItem')->name('navigation.items.store');
-        Route::put('items/{item}', 'Admin\NavigationController@updateItem')->name('navigation.items.update');
-        Route::delete('items/{item}', 'Admin\NavigationController@destroyItem')->name('navigation.items.destroy');
+        Route::post('items', [AdminNavigationController::class, 'storeItem'])->name('navigation.items.store');
+        Route::put('items/{item}', [AdminNavigationController::class, 'updateItem'])->name('navigation.items.update');
+        Route::delete('items/{item}', [AdminNavigationController::class, 'destroyItem'])->name('navigation.items.destroy');
 
-        Route::post('mega-content', 'Admin\NavigationController@storeMegaContent')->name('navigation.mega-content.store');
-        Route::put('mega-content/{content}', 'Admin\NavigationController@updateMegaContent')->name('navigation.mega-content.update');
-        Route::delete('mega-content/{content}', 'Admin\NavigationController@destroyMegaContent')->name('navigation.mega-content.destroy');
+        Route::post('mega-content', [AdminNavigationController::class, 'storeMegaContent'])->name('navigation.mega-content.store');
+        Route::put('mega-content/{content}', [AdminNavigationController::class, 'updateMegaContent'])->name('navigation.mega-content.update');
+        Route::delete('mega-content/{content}', [AdminNavigationController::class, 'destroyMegaContent'])->name('navigation.mega-content.destroy');
     });
 
     // Home Section admin routes
@@ -254,8 +255,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 });
 
 // ==================== MISC ROUTES ====================
-
-Route::get('/testing', [TestingController::class, 'index'])->name('testing');
 
 Route::fallback(function () {
     if (Gate::allows('isAdmin')) {

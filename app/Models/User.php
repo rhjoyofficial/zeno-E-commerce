@@ -24,6 +24,7 @@ class User extends Authenticatable
         'otp_blocked_until',
         'otp_requests_today',
         'last_otp_request_date',
+        'last_otp_request_at',
         'status',
         'entry_user_id',
         'otp_verification_token'
@@ -34,6 +35,7 @@ class User extends Authenticatable
         'otp_last_attempt' => 'datetime',
         'otp_blocked_until' => 'datetime',
         'last_otp_request_date' => 'date',
+        'last_otp_request_at' => 'datetime',
         'status' => 'string',
     ];
     public function role()

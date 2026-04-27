@@ -28,7 +28,7 @@
         </button>
 
         <div class="relative overflow-hidden w-full h-[290px] sm:h-[310px] md:h-[350px]">
-            <img src="{{ Storage::url($image) }}" alt="{{ $title }}" class="!w-full h-full object-cover" />
+            <img src="{{ asset($image) }}" alt="{{ $title }}" class="!w-full h-full object-cover" />
         </div>
 
         <div

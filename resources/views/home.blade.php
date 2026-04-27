@@ -43,16 +43,16 @@
 
     @include('frontend.navbar')
     @include('partials.flash-messages')
-    @include('frontend.heroSection')
+    @include('frontend.hero-section')
     {{-- --}}
 
     @foreach ($homeSections as $section)
-    @if ($section->type === 'new_arrivals')
-    @include('frontend.dynamic-new-arrivals', ['section' => $section])
-    @elseif ($section->type === 'fashion')
-    @include('frontend.dynamic-fashion', ['section' => $section])
-    @endif
-    <hr>
+        @if ($section->type === 'new_arrivals')
+            @include('frontend.dynamic-new-arrivals', ['section' => $section])
+        @elseif (in_array($section->type, ['mens_fashion', 'womens_fashion', 'kids_fashion']))
+            @include('frontend.dynamic-fashion', ['section' => $section])
+        @endif
+        <hr>
     @endforeach
 
     @include('partials.membership')
@@ -68,7 +68,7 @@
     {{-- Swiper JS --}}
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // --- Progress Bar as Indicator (Non-interactive) ---
             const progressBarThumb = document.querySelector('.custom-slider-thumb');
 
@@ -100,14 +100,14 @@
                     },
                 },
                 on: {
-                    init: function () {
+                    init: function() {
                         console.log('Swiper initialized, updating progress bar');
                         updateProgressBar(this);
                     },
-                    slideChange: function () {
+                    slideChange: function() {
                         updateProgressBar(this);
                     },
-                    slideChangeTransitionEnd: function () {
+                    slideChangeTransitionEnd: function() {
                         updateProgressBar(this);
                     },
                 },
@@ -121,7 +121,8 @@
                 const slidesPerView = swiperInstance.params.slidesPerView;
                 const maxIndex = Math.max(0, totalSlides - slidesPerView);
 
-                console.log('Total slides:', totalSlides, 'Slides per view:', slidesPerView, 'Max index:', maxIndex);
+                console.log('Total slides:', totalSlides, 'Slides per view:', slidesPerView, 'Max index:',
+                    maxIndex);
 
                 if (maxIndex === 0) {
                     // If all slides are visible, fill completely
@@ -169,19 +170,21 @@
     <script src="{{ asset('js/product-popup.js') }}"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // Update quantity
             function updateQuantity(itemId, quantity) {
-                const url = '{{ route("cart.update", ":item") }}'.replace(':item', itemId);
+                const url = '{{ route('cart.update', ':item') }}'.replace(':item', itemId);
 
                 fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ qty: quantity })
-                })
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            qty: quantity
+                        })
+                    })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
@@ -199,15 +202,15 @@
 
             // Remove item
             function removeItem(itemId) {
-                const url = '{{ route("cart.remove", ":item") }}'.replace(':item', itemId);
+                const url = '{{ route('cart.remove', ':item') }}'.replace(':item', itemId);
 
                 fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
@@ -231,7 +234,7 @@
 
             // Event listeners
             document.querySelectorAll('.increase-qty').forEach(button => {
-                button.addEventListener('click', function () {
+                button.addEventListener('click', function() {
                     const itemId = this.dataset.itemId;
                     const input = this.parentNode.querySelector('.quantity-input');
                     input.value = parseInt(input.value) + 1;
@@ -240,7 +243,7 @@
             });
 
             document.querySelectorAll('.decrease-qty').forEach(button => {
-                button.addEventListener('click', function () {
+                button.addEventListener('click', function() {
                     const itemId = this.dataset.itemId;
                     const input = this.parentNode.querySelector('.quantity-input');
                     if (input.value > 1) {
@@ -251,7 +254,7 @@
             });
 
             document.querySelectorAll('.quantity-input').forEach(input => {
-                input.addEventListener('change', function () {
+                input.addEventListener('change', function() {
                     const itemId = this.dataset.itemId;
                     if (this.value < 1) this.value = 1;
                     updateQuantity(itemId, this.value);
@@ -259,7 +262,7 @@
             });
 
             document.querySelectorAll('.remove-item').forEach(button => {
-                button.addEventListener('click', function () {
+                button.addEventListener('click', function() {
                     const itemId = this.dataset.itemId;
                     if (confirm('Are you sure you want to remove this item from your cart?')) {
                         removeItem(itemId);

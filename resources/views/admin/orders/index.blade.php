@@ -20,20 +20,14 @@
 
             <!-- Filters Section -->
             <div class="mb-6 p-4 bg-gray-50 hidden border border-gray-200" id="filtersSection">
-                <form id="filterForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <form id="filterForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Order Status</label>
                         <select name="status" class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                             <option value="">All Statuses</option>
-                            <option value="pending">Pending</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="processing">Processing</option>
-                            <option value="shipped">Shipped</option>
-                            <option value="delivered">Delivered</option>
-                            <option value="cancelled">Cancelled</option>
-                            <option value="refunded">Refunded</option>
-                            <option value="partially_refunded">Partially Refunded</option>
-                            <option value="on_hold">On Hold</option>
+                            @foreach(['pending','confirmed','processing','shipped','delivered','cancelled','refunded','partially_refunded','on_hold'] as $s)
+                                <option value="{{ $s }}" @selected(request('status') === $s)>{{ str_replace('_',' ',ucfirst($s)) }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div>
@@ -41,19 +35,22 @@
                         <select name="payment_status"
                             class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                             <option value="">All Payment Statuses</option>
-                            <option value="pending">Pending</option>
-                            <option value="paid">Paid</option>
-                            <option value="partially_paid">Partially Paid</option>
-                            <option value="refunded">Refunded</option>
-                            <option value="failed">Failed</option>
+                            @foreach(['pending','paid','partially_paid','refunded','failed'] as $ps)
+                                <option value="{{ $ps }}" @selected(request('payment_status') === $ps)>{{ str_replace('_',' ',ucfirst($ps)) }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
-                        <input type="date" name="start_date"
+                        <label class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                        <input type="date" name="start_date" value="{{ request('start_date') }}"
                             class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     </div>
-                    <div class="md:col-span-3 flex justify-end space-x-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                        <input type="date" name="end_date" value="{{ request('end_date') }}"
+                            class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="md:col-span-4 flex justify-end space-x-2">
                         <button type="button" id="applyFilters"
                             class="px-4 py-2 bg-black text-white hover:bg-gray-900 transition">
                             Apply Filters
@@ -111,11 +108,11 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ $order->customer_email }}</div>
-                                    @if ($order->user || $order->user > 0)
-                                        <div class="text-sm text-gray-500">User ID: {{ $order->user_id }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $order->customer_email ?? '—' }}</div>
+                                    @if ($order->user)
+                                        <div class="text-sm text-gray-500">{{ $order->user->name }}</div>
                                     @else
-                                        <div class="text-sm text-gray-500">Guest ID: {{ $order->guest_session_id }}</div>
+                                        <div class="text-sm text-gray-400 italic">Guest</div>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -158,25 +155,38 @@
                                             {{ number_format($order->total_paid, 2) }}</div>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex flex-wrap">
-
-                                    <a href="{{ route('admin.orders.show', $order->id) }}" title="View Order"
-                                        class="text-black hover:text-blue-900 mr-3">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                    </a>
-                                    <a href="{{ route('admin.orders.edit', $order->id) }}" title="Edit Order"
-                                        class="text-indigo-600 hover:text-indigo-900">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                    </a>
-
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center gap-3">
+                                        {{-- Quick view --}}
+                                        <button type="button"
+                                            class="quick-view text-black hover:text-blue-900"
+                                            data-order-id="{{ $order->id }}"
+                                            title="Quick View">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </button>
+                                        {{-- Full detail --}}
+                                        <a href="{{ route('admin.orders.show', $order->id) }}"
+                                            title="View Order"
+                                            class="text-indigo-600 hover:text-indigo-900">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                        </a>
+                                        {{-- Inline status --}}
+                                        <select class="status-select text-xs border-gray-300 py-1 pl-1 pr-6"
+                                            data-order-id="{{ $order->id }}"
+                                            data-current-status="{{ $order->status }}">
+                                            @foreach(['pending','confirmed','processing','shipped','delivered','cancelled','refunded','partially_refunded','on_hold'] as $s)
+                                                <option value="{{ $s }}" @selected($order->status === $s)>{{ str_replace('_',' ',ucfirst($s)) }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </td>
                             </tr>
                         @empty

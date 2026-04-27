@@ -102,7 +102,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500">Completed Orders</p>
-                                    <p class="text-2xl font-semibold text-gray-800">12</p>
+                                    <p class="text-2xl font-semibold text-gray-800">{{ $completedOrders }}</p>
                                 </div>
                             </div>
                         </div>
@@ -117,7 +117,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500">Pending Orders</p>
-                                    <p class="text-2xl font-semibold text-gray-800">3</p>
+                                    <p class="text-2xl font-semibold text-gray-800">{{ $pendingOrders }}</p>
                                 </div>
                             </div>
                         </div>
@@ -133,7 +133,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500">Wishlist Items</p>
-                                    <p class="text-2xl font-semibold text-gray-800">7</p>
+                                    <p class="text-2xl font-semibold text-gray-800">{{ $wishlistCount }}</p>
                                 </div>
                             </div>
                         </div>
@@ -169,45 +169,36 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
+                                    @forelse($recentOrders as $order)
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            #ORD-2023-001</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jun 15, 2023</td>
+                                            {{ $order->order_number }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ $order->created_at->format('M d, Y') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                class="px-2 inline-flex text-xs leading-5 font-semibold -full bg-green-100 text-green-800">Delivered</span>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                                @if($order->status === 'delivered') bg-green-100 text-green-800
+                                                @elseif($order->status === 'cancelled') bg-red-100 text-red-800
+                                                @elseif($order->status === 'shipped') bg-purple-100 text-purple-800
+                                                @elseif($order->status === 'processing') bg-indigo-100 text-indigo-800
+                                                @else bg-yellow-100 text-yellow-800 @endif">
+                                                {{ str_replace('_', ' ', ucfirst($order->status)) }}
+                                            </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$125.99</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ $order->currency }} {{ number_format($order->total, 2) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                            <a href="{{ route('customer.order.details', $order) }}"
+                                                class="text-indigo-600 hover:text-indigo-900">View</a>
                                         </td>
                                     </tr>
+                                    @empty
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            #ORD-2023-002</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jun 18, 2023</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                class="px-2 inline-flex text-xs leading-5 font-semibold -full bg-yellow-100 text-yellow-800">Processing</span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$89.50</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                        <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-400">
+                                            No orders yet. <a href="{{ route('products.list') }}" class="text-indigo-600 hover:underline">Start shopping</a>.
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            #ORD-2023-003</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jun 20, 2023</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                class="px-2 inline-flex text-xs leading-5 font-semibold -full bg-blue-100 text-blue-800">Shipped</span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$245.75</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-indigo-600 hover:text-indigo-900">Track</a>
-                                        </td>
-                                    </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>

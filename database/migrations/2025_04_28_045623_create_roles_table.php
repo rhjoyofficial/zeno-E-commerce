@@ -19,7 +19,7 @@ return new class extends Migration {
                 ->after('id')
                 ->nullable()
                 ->constrained()
-                ->onDelete('cascade');
+                ->onDelete('restrict');
         });
     }
 

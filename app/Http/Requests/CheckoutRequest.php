@@ -12,7 +12,11 @@ class CheckoutRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        if (Auth::check()) {
+            return Auth::user()->status === 'active';
+        }
+
+        return $this->session()->has('checkout');
     }
 
     /**
@@ -29,8 +33,9 @@ class CheckoutRequest extends FormRequest
             'apartment' => 'nullable|string|max:255',
             'city'      => 'required|string|max:255',
             'postcode'  => 'nullable|string|max:50',
-            'email'     => 'nullable|email|max:255',
-            'payment'   => 'required|string|in:cod,bkash,mobile-banking,card',
+            'email'     => [Auth::check() ? 'nullable' : 'required', 'email', 'max:255'],
+            'payment'     => 'required|string|in:cod,bkash,mobile-banking,card',
+            'coupon_code' => 'nullable|string|max:50',
         ];
     }
 }

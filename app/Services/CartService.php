@@ -32,6 +32,13 @@ class CartService
         $data['size_id'] = $size_id;
         $data['color_id'] = $color_id;
 
+        $stockAvailable = $this->getAvailableStock($data['product_id'], $data['variant_id'] ?? null);
+        $currentQty = $this->getCurrentCartQty($data['product_id'], $data['variant_id'] ?? null);
+        
+        if (($currentQty + $data['qty']) > $stockAvailable) {
+            return ['success' => false, 'message' => 'Requested quantity exceeds available stock.'];
+        }
+
         if (Auth::check()) {
             return $this->addToDatabaseCart($data);
         }
@@ -157,13 +164,23 @@ class CartService
     {
         if (Auth::check()) {
             $cartItem = ProductCart::where('user_id', Auth::id())->findOrFail($id);
+            $stockAvailable = $this->getAvailableStock($cartItem->product_id, $cartItem->variant_id);
+            if ($qty > $stockAvailable) {
+                return ['success' => false, 'message' => 'Requested quantity exceeds available stock.'];
+            }
             $cartItem->update(['qty' => $qty]);
         } else {
             $cart = Session::get('cart', []);
             if (isset($cart[$id])) {
+                $stockAvailable = $this->getAvailableStock($cart[$id]['product_id'], $cart[$id]['variant_id']);
+                if ($qty > $stockAvailable) {
+                    return ['success' => false, 'message' => 'Requested quantity exceeds available stock.'];
+                }
                 $cart[$id]['qty'] = $qty;
                 Session::put('cart', $cart);
                 Session::save();
+            } else {
+                return ['success' => false, 'message' => 'Cart item not found.'];
             }
         }
 
@@ -280,5 +297,38 @@ class CartService
         }
 
         return $count;
+    }
+
+    /**
+     * Get available stock for a product or variant.
+     */
+    protected function getAvailableStock($productId, $variantId = null): int
+    {
+        if ($variantId) {
+            $variant = ProductVariant::find($variantId);
+            return $variant ? (int) $variant->stock_quantity : 0;
+        }
+        $product = Product::find($productId);
+        return $product ? (int) $product->stock_quantity : 0;
+    }
+
+    /**
+     * Get current quantity of a product/variant in the cart.
+     */
+    protected function getCurrentCartQty($productId, $variantId = null): int
+    {
+        if (Auth::check()) {
+            $item = ProductCart::where('user_id', Auth::id())
+                ->where('product_id', $productId)
+                ->where('variant_id', $variantId)
+                ->first();
+            return $item ? (int) $item->qty : 0;
+        }
+
+        $cart = Session::get('cart', []);
+        $variantIdStr = $variantId ?? '0';
+        $uniqueId = md5($productId . '_' . $variantIdStr);
+        
+        return isset($cart[$uniqueId]) ? (int) $cart[$uniqueId]['qty'] : 0;
     }
 }

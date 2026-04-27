@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use App\Http\Requests\CheckoutRequest;
 use App\Services\CheckoutService;
-use App\Models\Order;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
@@ -27,7 +28,10 @@ class CheckoutController extends Controller
                 return redirect()->back()->with('warning', 'No items selected for checkout.');
             }
 
-            $selectedItems = array_map('intval', $selectedItems);
+            // Auth users use integer DB IDs; guests use MD5 string uniqueIds
+            if (auth()->check()) {
+                $selectedItems = array_map('intval', $selectedItems);
+            }
             $cartItems = $this->checkoutService->getCheckoutItems($selectedItems);
 
             if ($cartItems->isEmpty()) {
@@ -35,36 +39,26 @@ class CheckoutController extends Controller
                     ->with('error', 'Your selected items are invalid or not available.');
             }
 
-            $vatRate = config('app.vat_rate', 0.05);
-            $subtotal = 0;
-            $discountTotal = 0;
-            $taxAmount = 0;
-            $grandTotal = 0;
-
-            foreach ($cartItems as $cartItem) {
-                $basePrice = $cartItem->variant ? $cartItem->variant->price : $cartItem->product->price;
-                $discountedPrice = $cartItem->variant ? $cartItem->variant->discount_price : $cartItem->product->discount_price;
-                $effectivePrice = $discountedPrice ?? $basePrice;
-
-                $itemDiscount = ($basePrice - $effectivePrice) * $cartItem->qty;
-                $subtotal += $effectivePrice * $cartItem->qty;
-                $discountTotal += $itemDiscount;
-            }
-
-            $taxAmount = $subtotal * $vatRate;
-            $grandTotal = $subtotal + $taxAmount;
+            $vatRate = $this->checkoutService->getVatRate();
+            $totals  = $this->checkoutService->calculateOrderTotals($cartItems, $vatRate);
 
             session([
                 'checkout' => [
                     'items'       => $cartItems->pluck('id')->toArray(),
-                    'subtotal'    => $subtotal,
-                    'discount'    => $discountTotal,
-                    'vat'         => $taxAmount,
-                    'grand_total' => $grandTotal,
+                    'subtotal'    => $totals['subtotal'],
+                    'discount'    => $totals['discountTotal'],
+                    'vat'         => $totals['taxTotal'],
+                    'grand_total' => $totals['grandTotal'],
                 ],
             ]);
 
-            return view('customer.checkout', compact('cartItems', 'subtotal', 'discountTotal', 'taxAmount', 'grandTotal'));
+            return view('customer.checkout', [
+                'cartItems'     => $cartItems,
+                'subtotal'      => $totals['subtotal'],
+                'discountTotal' => $totals['discountTotal'],
+                'taxAmount'     => $totals['taxTotal'],
+                'grandTotal'    => $totals['grandTotal'],
+            ]);
         } catch (\Exception $e) {
             Log::error('Checkout error: ' . $e->getMessage());
             return redirect()->route('cart.index')->withErrors(['error' => 'Something went wrong, please try again.']);
@@ -90,22 +84,30 @@ class CheckoutController extends Controller
 
             session()->forget('checkout');
 
-            return redirect()->route('cart.index')->with('success', 'Order placed successfully.');
+            return redirect()->route('checkout.confirmation', $result['order']);
         } catch (\Exception $e) {
             if ($e->getMessage() === 'PRICE_CHANGED') {
                 return redirect()->back()->with('warning', 'Product prices have changed. Please review the updated totals.');
             }
-            
+
             return redirect()->route('cart.index')->with('error', $e->getMessage());
         }
     }
 
-    public function placeOrder(CheckoutRequest $request)
+    public function confirmation(Order $order)
     {
-        return response()->json([
-            'success'  => true,
-            'message'  => 'Order placed successfully',
-            'order_id' => 'ORD123456'
-        ]);
+        // Allow the order owner or the guest session that placed it
+        if ($order->user_id && $order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if (!$order->user_id && $order->guest_session_id !== session()->getId()) {
+            abort(403);
+        }
+
+        $order->load(['orderItems', 'shippingAddress']);
+
+        return view('customer.order-confirmation', compact('order'));
     }
+
 }

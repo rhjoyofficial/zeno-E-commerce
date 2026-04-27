@@ -5,84 +5,37 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    public $products = [
-        [
-            'image' => 'images/1.jpg',
-            'title' => "Men's Casual Shirt",
-            'price' => 49.99,
-            'badge' => 'New',
-            'stock' => true,
-            'categories' => 'men women',
-        ],
-        [
-            'image' => 'images/2.jpg',
-            'title' => 'Vintage Hoodie',
-            'price' => 89.99,
-            'badge' => 'Sale',
-            'stock' => false,
-            'categories' => 'men',
-        ],
-        [
-            'image' => 'images/3.jpg',
-            'title' => 'Ladies T-Shirt',
-            'price' => 29.99,
-            'badge' => 'Hot',
-            'stock' => true,
-            'categories' => 'women',
-        ],
-        [
-            'image' => 'images/4.jpg',
-            'title' => 'Running Shoes',
-            'price' => 119.99,
-            'badge' => 'New',
-            'stock' => false,
-            'categories' => 'men women',
-        ],
-        [
-            'image' => 'images/5.jpg',
-            'title' => 'Winter Jacket',
-            'price' => 149.99,
-            'badge' => 'Limited',
-            'stock' => true,
-            'categories' => 'kids women',
-        ],
-        [
-            'image' => 'images/6.jpg',
-            'title' => 'Winter Jacket',
-            'price' => 149.99,
-            'badge' => 'Limited',
-            'stock' => false,
-            'categories' => 'men women',
-        ],
-        [
-            'image' => 'images/7.jpg',
-            'title' => 'Winter Jacket',
-            'price' => 149.99,
-            'badge' => 'Limited',
-            'stock' => true,
-            'categories' => 'kids women',
-        ],
-        [
-            'image' => 'images/8.jpg',
-            'title' => 'Winter Jacket',
-            'price' => 149.99,
-            'badge' => 'Limited',
-            'stock' => false,
-            'categories' => 'men women',
-        ],
-    ];
     public function index()
     {
-        return view('frontend.product-list', ['products' => $this->products]);
+        $products = Product::active()
+            ->with(['primaryImage', 'category'])
+            ->latest()
+            ->paginate(12);
+
+        return view('frontend.product-list', [
+            'products' => $this->formatForCard($products),
+        ]);
     }
-    public function show(string $id)
+
+    public function show(Product $product)
     {
-        return view('frontend.product-details', ['products' => $this->products]);
+        $product->load(['images', 'category', 'activeVariants.color', 'activeVariants.size']);
+
+        $related = Product::active()
+            ->where('id', '!=', $product->id)
+            ->when($product->category_id, fn($q) => $q->where('category_id', $product->category_id))
+            ->with(['primaryImage', 'category'])
+            ->limit(4)
+            ->get();
+
+        return view('frontend.product-details', [
+            'product'  => $product,
+            'products' => $this->formatForCard($related),
+        ]);
     }
 
     public function getVariants(Request $request)
@@ -93,13 +46,11 @@ class ProductController extends Controller
 
         try {
             $productId = $request->input('product_id');
-            
-            // Fetch the product with its variants, colors, sizes, etc.
+
             $product = Product::with(['images'])
                 ->byId($productId)
                 ->firstOrFail();
-                
-            // Format the base response
+
             $response = [
                 'id' => $product->id,
                 'title' => $product->title,
@@ -114,9 +65,8 @@ class ProductController extends Controller
                     ];
                 }),
             ];
-            // Only load variants if the product has variants
+
             if ($product->has_variants) {
-                // Eager load variants with their relationships
                 $product->load(['activeVariants.color', 'activeVariants.size']);
 
                 $response['variants'] = $product->activeVariants->map(function ($variant) {
@@ -135,7 +85,7 @@ class ProductController extends Controller
             } else {
                 $response['variants'] = [];
             }
-            // dd($response);
+
             return response()->json($response);
         } catch (\Exception $e) {
             return response()->json([
@@ -143,5 +93,23 @@ class ProductController extends Controller
                 'message' => $e->getMessage()
             ], 404);
         }
+    }
+
+    /**
+     * Transform a collection or paginator of Product models into the
+     * flat array shape expected by the x-product-card component.
+     */
+    private function formatForCard($products): array
+    {
+        return collect($products)->map(fn($product) => [
+            'id'            => $product->id,
+            'image'         => $product->primaryImage?->image_path ?? 'images/products/default.jpg',
+            'title'         => $product->title,
+            'price'         => $product->price,
+            'discountPrice' => $product->discount_price ?: null,
+            'badge'         => $product->discount_price ? 'Sale' : 'New',
+            'stock'         => $product->stock_quantity > 0,
+            'categories'    => $product->category ? [$product->category->category_name] : [],
+        ])->all();
     }
 }

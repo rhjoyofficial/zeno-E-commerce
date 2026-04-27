@@ -18,8 +18,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-500">Total Revenue</p>
-                        <p class="text-2xl font-semibold text-gray-800">$24,780.00</p>
-                        <p class="text-xs text-green-600">+12.5% from last month</p>
+                        <p class="text-2xl font-semibold text-gray-800">${{ number_format($totalRevenue, 2) }}</p>
                     </div>
                 </div>
             </div>
@@ -35,8 +34,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-500">Total Orders</p>
-                        <p class="text-2xl font-semibold text-gray-800">1,245</p>
-                        <p class="text-xs text-green-600">+8.3% from last month</p>
+                        <p class="text-2xl font-semibold text-gray-800">{{ number_format($totalOrders) }}</p>
                     </div>
                 </div>
             </div>
@@ -52,8 +50,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-500">Customers</p>
-                        <p class="text-2xl font-semibold text-gray-800">856</p>
-                        <p class="text-xs text-green-600">+5.7% from last month</p>
+                        <p class="text-2xl font-semibold text-gray-800">{{ number_format($totalCustomers) }}</p>
                     </div>
                 </div>
             </div>
@@ -69,8 +66,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-500">Products</p>
-                        <p class="text-2xl font-semibold text-gray-800">342</p>
-                        <p class="text-xs text-green-600">+3.2% from last month</p>
+                        <p class="text-2xl font-semibold text-gray-800">{{ number_format($totalProducts) }}</p>
                     </div>
                 </div>
             </div>
@@ -125,25 +121,35 @@
                     <h3 class="text-lg font-semibold text-gray-800">Recent Orders</h3>
                 </div>
                 <div class="divide-y divide-gray-200">
-                    @for($i = 0; $i < 5; $i++) <div class="px-6 py-4 hover: transition-colors duration-150">
+                    @forelse($recentOrders as $order)
+                    <div class="px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-medium text-gray-900">Order #ORD-2023-{{ str_pad(1000 + $i, 4,
-                                    '0', STR_PAD_LEFT) }}</p>
-                                <p class="text-xs text-gray-500">Placed on {{ now()->subDays($i)->format('M d, Y') }}
+                                <p class="text-sm font-medium text-gray-900">
+                                    <a href="{{ route('admin.orders.show', $order) }}" class="hover:text-indigo-600">
+                                        {{ $order->order_number }}
+                                    </a>
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    {{ $order->user?->name ?? 'Guest' }} · {{ $order->created_at->format('M d, Y') }}
                                 </p>
                             </div>
                             <div class="text-right">
-                                <p class="text-sm font-medium text-gray-900">${{ number_format(rand(50, 500), 2) }}</p>
-                                <span
-                                    class="inline-flex items-center px-2.5 py-0.5 -full text-xs font-medium bg-green-100 text-green-800">
-                                    Completed
+                                <p class="text-sm font-medium text-gray-900">{{ $order->currency }} {{ number_format($order->total, 2) }}</p>
+                                <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full
+                                    @if($order->status === 'delivered') bg-green-100 text-green-800
+                                    @elseif($order->status === 'cancelled') bg-red-100 text-red-800
+                                    @elseif($order->status === 'shipped') bg-purple-100 text-purple-800
+                                    @else bg-yellow-100 text-yellow-800 @endif">
+                                    {{ str_replace('_', ' ', ucfirst($order->status)) }}
                                 </span>
                             </div>
                         </div>
+                    </div>
+                    @empty
+                    <div class="px-6 py-8 text-center text-sm text-gray-400">No orders yet.</div>
+                    @endforelse
                 </div>
-                @endfor
-            </div>
             <div class="px-6 py-4 border-t border-gray-200  text-right">
                 <a href="{{ route('admin.orders.index') }}"
                     class="text-sm font-medium text-indigo-600 hover:text-indigo-900">View all orders</a>
@@ -156,25 +162,24 @@
                 <h3 class="text-lg font-semibold text-gray-800">Top Selling Products</h3>
             </div>
             <div class="divide-y divide-gray-200">
-                @foreach(['Wireless Headphones', 'Smart Watch', 'Bluetooth Speaker', 'Laptop Backpack', 'Phone Charger']
-                as $index => $product)
-                <div class="px-6 py-4 hover: transition-colors duration-150">
+                @forelse($topProducts as $index => $item)
+                <div class="px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 h-10 w-10 -md bg-indigo-100 flex items-center justify-center">
-                            <span class="text-indigo-600">{{ $index + 1 }}</span>
+                        <div class="flex-shrink-0 h-10 w-10 bg-indigo-100 flex items-center justify-center">
+                            <span class="text-indigo-600 font-semibold text-sm">{{ $index + 1 }}</span>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-900">{{ $product }}</p>
-                            <p class="text-xs text-gray-500">{{ rand(50, 200) }} sold</p>
+                        <div class="ml-4 flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">{{ $item->product?->title ?? '—' }}</p>
+                            <p class="text-xs text-gray-500">{{ number_format($item->total_sold) }} sold</p>
                         </div>
                         <div class="ml-auto text-right">
-                            <p class="text-sm font-medium text-gray-900">${{ number_format(rand(20, 200) + (rand(0,
-                                99)/100), 2) }}</p>
-                            <p class="text-xs text-green-600">+{{ rand(5, 30) }}%</p>
+                            <p class="text-sm font-medium text-gray-900">${{ number_format($item->total_revenue, 2) }}</p>
                         </div>
                     </div>
                 </div>
-                @endforeach
+                @empty
+                <div class="px-6 py-8 text-center text-sm text-gray-400">No sales data yet.</div>
+                @endforelse
             </div>
             <div class="px-6 py-4 border-t border-gray-200  text-right">
                 <a href="{{ route('admin.products.index') }}"

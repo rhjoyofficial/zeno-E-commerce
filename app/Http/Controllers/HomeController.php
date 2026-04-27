@@ -3,10 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Product;
-use App\Models\Category;
 use App\Models\HomeSection;
-use App\Models\ProductCart;
 use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller

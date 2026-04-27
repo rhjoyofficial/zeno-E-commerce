@@ -10,9 +10,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rules\Password;
 
 class RegisterController extends Controller
 {
+    public function __construct(protected OtpService $otpService) {}
+
     public function showRegistrationForm()
     {
         if (!view()->exists('auth.register')) {
@@ -27,7 +30,7 @@ class RegisterController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', 'string', 'confirmed'],
+            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         try {
@@ -51,8 +54,7 @@ class RegisterController extends Controller
                 'otp_verification_token' => null,
             ]);
 
-            $otpService = new OtpService();
-            $token = $otpService->generateAndSendOtp($user);
+            $token = $this->otpService->generateAndSendOtp($user);
             DB::commit();
 
             return redirect()->route('otp.verify', ['token' => $token])

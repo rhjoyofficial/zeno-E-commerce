@@ -5,85 +5,91 @@ namespace App\Http\Controllers\Payment;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
-    /**
-     * Handle bKash Payment
-     */
     public function bkash(Request $request, Order $order)
     {
+        $this->authorizeOrderAccess($order);
+
         try {
-            // Step 1: Create Payment Request (bKash API)
-            // Example: call your bKash service here
-            // $paymentUrl = BkashService::initiatePayment($order);
+            // TODO: replace with real BkashService::initiatePayment($order)
+            Log::info('Initiating bKash payment', ['order_id' => $order->id]);
 
-            Log::info("Initiating bKash payment", ['order_id' => $order->id]);
-
-            // Step 2: Redirect user to bKash payment page
-            return redirect()->away('https://sandbox.bkash.com/payment-url'); // replace with real $paymentUrl orders.show
+            return redirect()->route('checkout.confirmation', $order)
+                ->with('error', 'bKash gateway not configured.');
         } catch (\Exception $e) {
-            Log::error("bKash Payment Failed: " . $e->getMessage(), ['order_id' => $order->id]);
-            return redirect()->route('home', $order->id)
+            Log::error('bKash payment initiation failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            return redirect()->route('checkout.confirmation', $order)
                 ->with('error', 'Failed to initiate bKash payment. Please try again.');
         }
     }
 
-    /**
-     * Handle Mobile Banking Payment (Manual Verification)
-     */
     public function mobileBanking(Request $request, Order $order)
     {
+        $this->authorizeOrderAccess($order);
+
         $request->validate([
-            'transaction_id' => 'required|string|max:100',
+            'transaction_id' => 'required|string|max:100|regex:/^[A-Za-z0-9\-]+$/',
         ]);
 
-        // Save transaction reference for admin verification orders.show
         $order->update([
-            'status' => 'payment_pending',
-            'transaction_id' => $request->transaction_id,
+            'payment_status' => 'pending',
+            'transaction_id'  => $request->transaction_id,
         ]);
 
-        Log::info("Mobile banking transaction submitted", [
-            'order_id' => $order->id,
-            'transaction_id' => $request->transaction_id,
+        Log::info('Mobile banking transaction submitted', [
+            'order_id'       => $order->id,
+            'transaction_ref' => substr($request->transaction_id, 0, 6) . '***',
         ]);
 
-        return redirect()->route('home', $order->id)
+        return redirect()->route('checkout.confirmation', $order)
             ->with('info', 'Your transaction ID has been submitted. Order will be confirmed after verification.');
     }
 
-    /**
-     * Handle Card Payment (SSLCommerz / Stripe etc.)
-     */
     public function card(Request $request, Order $order)
     {
+        $this->authorizeOrderAccess($order);
+
         try {
-            // Step 1: Initiate payment with SSLCommerz/Stripe
-            // Example: $paymentUrl = SslCommerzService::makePayment($order);
+            // TODO: replace with real SslCommerzService::makePayment($order) or StripeService
+            Log::info('Initiating card payment', ['order_id' => $order->id]);
 
-            Log::info("Initiating Card Payment", ['order_id' => $order->id]);
-
-            // Step 2: Redirect to gateway checkout page
-            return redirect()->away('https://sandbox.sslcommerz.com/payment-url'); // replace with real $paymentUrl orders.show
+            return redirect()->route('checkout.confirmation', $order)
+                ->with('error', 'Card payment gateway not configured.');
         } catch (\Exception $e) {
-            Log::error("Card Payment Failed: " . $e->getMessage(), ['order_id' => $order->id]);
-            return redirect()->route('home', $order->id)
+            Log::error('Card payment initiation failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            return redirect()->route('checkout.confirmation', $order)
                 ->with('error', 'Failed to initiate card payment. Please try again.');
         }
     }
 
-    /**
-     * Payment Callback (For Gateways like bKash, SSLCommerz)
-     */
+    // Gateway POST-back endpoint — must verify gateway signature before updating any order.
+    // Until real signature verification is wired up this rejects all callbacks (fail-safe).
     public function callback(Request $request)
     {
-        // Example: process gateway response here
-        // Validate payment response and update order status
-        Log::info("Payment Callback Received", $request->all());
+        Log::warning('Payment callback received — no verification logic implemented.', [
+            'ip'      => $request->ip(),
+            'gateway' => $request->query('gateway', 'unknown'),
+        ]);
 
-        // Implement gateway-specific verification here
-        return redirect()->route('cart.index')->with('success', 'Payment verified and order confirmed.');
+        abort(501, 'Payment callback verification not implemented.');
+    }
+
+    private function authorizeOrderAccess(Order $order): void
+    {
+        $user = Auth::user();
+
+        if ($order->user_id) {
+            if (!$user || $order->user_id !== $user->id) {
+                abort(403);
+            }
+        } else {
+            if ($order->guest_session_id !== session()->getId()) {
+                abort(403);
+            }
+        }
     }
 }

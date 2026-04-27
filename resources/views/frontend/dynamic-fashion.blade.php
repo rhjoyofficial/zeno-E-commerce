@@ -1,6 +1,6 @@
 <div class="relative max-w-7xl mx-auto sm:px-6 md:px-10 lg:px-8 py-16 ">
     <div class="relative h-[400px] bg-cover bg-center flex items-center justify-center text-center"
-        style="background-image: url('{{ Storage::url($section->banner_image) }}');">
+        style="background-image: url('{{ asset($section->banner_image) }}');">
         <div class="bg-black bg-opacity-40 w-full h-full absolute top-0 left-0"></div>
         <div class="relative z-10 text-white">
             <h2 class="text-5xl font-semibold tracking-wide font-megumi uppercase">{{ $section->title }}</h2>
@@ -12,16 +12,17 @@
         <div class="swiper fashionCategorySlider">
             <div class="swiper-wrapper">
                 @foreach ($section->items as $item)
-                <a href="#" class="swiper-slide relative bg-white cursor-pointer group overflow-hidden" data-category-id="{{ $item->category_id }}">
-                    <div class="w-full h-96 overflow-hidden">
-                        <img src="{{ Storage::url($item->image) }}" alt="{{ $item->title }}"
-                            class="w-full h-full object-cover transform transition-transform duration-500">
-                    </div>
-                    <div class="pt-6 text-left mt-2">
-                        <h3 class="text-2xl font-normal font-megumi uppercase">{{ $item->title }}</h3>
-                        <p class="text-lg text-gray-800 capitalize">{{ $item->subtitle }}</p>
-                    </div>
-                </a>
+                    <a href="#" class="swiper-slide relative bg-white cursor-pointer group overflow-hidden"
+                        data-category-id="{{ $item->category_id }}">
+                        <div class="w-full h-96 overflow-hidden">
+                            <img src="{{ asset($item->image) }}" alt="{{ $item->title }}"
+                                class="w-full h-full object-cover transform transition-transform duration-500">
+                        </div>
+                        <div class="pt-6 text-left mt-2">
+                            <h3 class="text-2xl font-normal font-megumi uppercase">{{ $item->title }}</h3>
+                            <p class="text-lg text-gray-800 capitalize">{{ $item->subtitle }}</p>
+                        </div>
+                    </a>
                 @endforeach
             </div>
         </div>
@@ -59,11 +60,11 @@
     <section class="max-w-7xl mx-auto mt-10">
         <div class="text-left mb-8">
             <p class="text-gray-800 text-xl font-semibold uppercase">{{ $section->section_title ?? 'level up' }}</p>
-            <h2 class="text-[40px] font-normal text-black mb-2 font-megumi tracking-tight ">{{
-                $section->section_subtitle ?? 'Your Fashion Game' }}</h2>
+            <h2 class="text-[40px] font-normal text-black mb-2 font-megumi tracking-tight ">
+                {{ $section->section_subtitle ?? 'Your Fashion Game' }}</h2>
         </div>
         @php
-        $products = $section->getProducts();
+            $products = $section->getProducts();
         @endphp
         @include('products.index', ['products' => $products])
 

@@ -6,17 +6,21 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use App\Services\CartService;
 
 class SyncCartOnLogin
 {
+    protected CartService $cartService;
+
+    public function __construct(CartService $cartService)
+    {
+        $this->cartService = $cartService;
+    }
+
     public function handle(Request $request, Closure $next)
     {
         if (Auth::check() && Session::has('cart')) {
-            // Get the cart controller instance
-            $cartController = app()->make('App\Http\Controllers\Customer\CartController');
-            
-            // Sync the cart
-            $cartController->syncCart();
+            $this->cartService->syncCart();
         }
 
         return $next($request);

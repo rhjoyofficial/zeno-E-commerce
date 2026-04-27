@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Services\CartService;
 use App\Models\Order;
 
@@ -89,14 +90,4 @@ class CartController extends Controller
         return response()->json($variantData);
     }
 
-    public function getCartCount()
-    {
-        return $this->cartService->getCartCount();
-    }
-
-    public static function getCartCountStatic()
-    {
-        // Using dependency injection static workaround or new instance since this is static
-        return app(CartService::class)->getCartCount();
-    }
 }

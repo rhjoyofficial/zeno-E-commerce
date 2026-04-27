@@ -28,13 +28,13 @@ class CustomerController extends Controller
      */
     public function data(Request $request)
     {
-        $query = User::with(['profile', 'orders'])
+        $query = User::with(['customerProfile', 'orders'])
             ->whereHas('role', function ($q) {
-                $q->where('slug', 'customer'); // Assuming you have a role system
+                $q->where('slug', 'customer');
             })
             ->select([
                 'users.*',
-                DB::raw('(SELECT COUNT(*) FROM invoices WHERE user_id = users.id) as orders_count'),
+                DB::raw('(SELECT COUNT(*) FROM orders WHERE user_id = users.id) as orders_count'),
                 DB::raw('(SELECT MAX(last_activity) FROM sessions WHERE user_id = users.id) as last_activity')
             ]);
 
@@ -244,21 +244,9 @@ class CustomerController extends Controller
     public function destroy(User $customer)
     {
         DB::transaction(function () use ($customer) {
-            // Delete related records
             $customer->profile()->delete();
-
-            // Delete invoices and related records
-            $customer->invoices()->each(function ($invoice) {
-                $invoice->products()->delete();
-                $invoice->delete();
-            });
-
-            // Delete other related data
-            $customer->reviews()->delete();
-            $customer->wishlist()->delete();
-            $customer->cart()->delete();
-
-            // Finally delete the user
+            $customer->productWishes()->delete();
+            $customer->productCarts()->delete();
             $customer->delete();
         });
 

@@ -129,10 +129,10 @@
             <div>
                 <h3 class="font-bold uppercase text-base text-black mb-4 tracking-wider">CONTACT US</h3>
                 <ul class="space-y-2">
-                    <li class="text-gray-600">+880 17145-32308</li>
-                    <li class="text-gray-600">support@zeno.com</li>
-                    <li class="text-gray-600">Sun – Thu (10AM–5PM)</li>
-                    <li class="text-gray-600">D Block, Road 10, Banani</li>
+                    <li class="text-gray-600">{{ getSettings('site_phone') }}</li>
+                    <li class="text-gray-600">{{ getSettings('site_email') }}</li>
+                    <li class="text-gray-600">{{ getSettings('site_working_hours') }}</li>
+                    <li class="text-gray-600">{{ getSettings('site_address') }}</li>
                 </ul>
             </div>
         </div>
@@ -141,7 +141,7 @@
         <div class="w-full border-t border-gray-200"></div>
         <!-- Copyright -->
         <div class="text-center text-black text-base py-6">
-            © 2025 ZENO. All rights reserved
+            © {{ date('Y') }} ZENO. All rights reserved
         </div>
     </div>
 </footer>
