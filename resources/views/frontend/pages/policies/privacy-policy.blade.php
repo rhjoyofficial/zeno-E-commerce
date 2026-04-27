@@ -1,4 +1,4 @@
-@extends('layouts.master-layout')
+@extends('layouts.app')
 @section('title', 'Privacy Policy')
 @push('styles')
     <style>

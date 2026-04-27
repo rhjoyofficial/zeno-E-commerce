@@ -2,24 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
+use App\Services\HomeSectionService;
 use Illuminate\Http\Request;
-use App\Models\HomeSection;
 use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
+    public function __construct(private HomeSectionService $homeSectionService) {}
+
     public function index(Request $request)
     {
-        // Get authenticated user
         $user = Auth::check() ? [
-            'id' => Auth::user()->id,
-            'name' => Auth::user()->name,
+            'id'    => Auth::user()->id,
+            'name'  => Auth::user()->name,
             'email' => Auth::user()->email,
         ] : null;
 
-        $homeSections = HomeSection::active()->orderBy('order')->get();
-        // dd($homeSections);
-        return view('home', compact('user', 'homeSections'));
+        $homeSections = $this->homeSectionService->getActiveSections();
+
+        $sectionProducts = [];
+        foreach ($homeSections as $section) {
+            $sectionProducts[$section->id] = $this->homeSectionService->getProductsForSection($section);
+        }
+
+        $topCategories = Category::whereNull('parent_id')->active()->get();
+
+        return view('home', compact('user', 'homeSections', 'sectionProducts', 'topCategories'));
     }
 
     public function aboutUs()

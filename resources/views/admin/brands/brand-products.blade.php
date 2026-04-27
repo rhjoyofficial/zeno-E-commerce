@@ -97,7 +97,7 @@
                         </div>
                     </div>
 
-                    <p class="text-gray-600 text-sm mb-3">{{ $product->short_des }}</p>
+                    <p class="text-gray-600 text-sm mb-3">{{ $product->short_description }}</p>
 
                     <div class="flex items-center justify-between">
                         <div>

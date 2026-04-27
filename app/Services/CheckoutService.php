@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Coupon;
 use App\Models\Order;
+use App\Services\SequenceService;
 use App\Models\ProductCart;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -174,13 +175,12 @@ class CheckoutService
                 'state'            => null,
             ]);
 
-            // Locked max prevents duplicate invoice numbers under concurrency
-            $lastInvoice = Order::lockForUpdate()->max('invoice_number') ?? 0;
+            $invoiceNumber = app(SequenceService::class)->next('invoice_number');
             $order = Order::create([
                 'user_id'             => $userId,
                 'guest_session_id'    => $sessionId,
                 'order_number'        => 'ORD-' . Str::upper(Str::random(8)),
-                'invoice_number'      => $lastInvoice + 1,
+                'invoice_number'      => $invoiceNumber,
                 'customer_email'      => $userId ? Auth::user()->email : ($validatedData['email'] ?? null),
                 'customer_phone'      => $validatedData['phone'],
                 'customer_ip'         => $customerIp,

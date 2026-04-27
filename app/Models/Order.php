@@ -12,7 +12,6 @@ class Order extends Model
     use HasFactory, SoftDeletes;
     protected $fillable = [
         'order_number',
-        'invoice_number',
         'status',
         'subtotal',
         'discount_amount',

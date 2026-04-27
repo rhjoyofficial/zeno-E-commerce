@@ -26,8 +26,8 @@ class HomeSectionItem extends Model
         return $this->belongsTo(HomeSection::class, 'home_section_id');
     }
 
-    public function homeSection()
+    public function category()
     {
-        return $this->belongsTo(HomeSection::class, 'home_section_id');
+        return $this->belongsTo(Category::class);
     }
 }

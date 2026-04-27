@@ -12,13 +12,9 @@ class ProductCart extends Model
         'user_id',
         'product_id',
         'variant_id',
-        'color',
-        'size',
         'qty',
         'price',
         'cart_key',
-        // 'created_by',
-        // 'updated_by',
     ];
     protected $casts = [
         'qty' => 'integer',

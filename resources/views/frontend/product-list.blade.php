@@ -1,4 +1,4 @@
-@extends('layouts.master-layout')
+@extends('layouts.app')
 @section('title', 'Product Page')
 @section('content')
 
@@ -58,6 +58,4 @@
         </button>
     </div>
 </div>
-@include('partials.membership')
-
 @endsection

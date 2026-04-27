@@ -12,7 +12,6 @@ class ProductWish extends Model
         'product_id',
         'user_id',
         'wish_key',
-        // 'variant_id', // Optional: Add if schema updated
     ];
     public function product()
     {
@@ -22,11 +21,6 @@ class ProductWish extends Model
     {
         return $this->belongsTo(User::class);
     }
-    // Optional: Uncomment if adding variant_id to schema
-    // public function productVariant()
-    // {
-    //     return $this->belongsTo(ProductVariant::class, 'variant_id');
-    // }
 
     protected static function booted()
     {

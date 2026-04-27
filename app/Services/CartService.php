@@ -18,8 +18,6 @@ class CartService
     {
         $product = Product::findOrFail($data['product_id']);
         $price = $product->price;
-        $size_id = null;
-        $color_id = null;
 
         if (!empty($data['variant_id'])) {
             $variant = ProductVariant::findOrFail($data['variant_id']);
@@ -29,13 +27,9 @@ class CartService
             }
 
             $price = $variant->price;
-            $size_id = $variant->size_id;
-            $color_id = $variant->color_id;
         }
 
         $data['price'] = $price;
-        $data['size_id'] = $size_id;
-        $data['color_id'] = $color_id;
 
         $stockAvailable = $this->getAvailableStock($data['product_id'], $data['variant_id'] ?? null);
         $currentQty = $this->getCurrentCartQty($data['product_id'], $data['variant_id'] ?? null);
@@ -67,13 +61,11 @@ class CartService
             $existingItem->save();
         } else {
             ProductCart::create([
-                'user_id' => $userId,
+                'user_id'    => $userId,
                 'product_id' => $data['product_id'],
                 'variant_id' => $data['variant_id'] ?? null,
-                'color' => $data['color_id'],
-                'size' => $data['size_id'],
-                'qty' => $data['qty'],
-                'price' => $data['price']
+                'qty'        => $data['qty'],
+                'price'      => $data['price'],
             ]);
         }
 
@@ -91,7 +83,7 @@ class CartService
     {
         $cart = Session::get('cart', []);
         $variantId = $data['variant_id'] ?? '0';
-        $uniqueId = md5($data['product_id'] . '_' . $variantId);
+        $uniqueId = $data['product_id'] . ':' . $variantId;
 
         if (isset($cart[$uniqueId])) {
             $cart[$uniqueId]['qty'] += $data['qty'];
@@ -100,10 +92,8 @@ class CartService
                 'uniqueId'   => $uniqueId,
                 'product_id' => $data['product_id'],
                 'variant_id' => $data['variant_id'] ?? null,
-                'color'      => $data['color_id'],
-                'size'       => $data['size_id'],
                 'qty'        => $data['qty'],
-                'price'      => $data['price']
+                'price'      => $data['price'],
             ];
         }
 
@@ -246,8 +236,6 @@ class CartService
                         'product_id' => $item['product_id'],
                         'variant_id' => $item['variant_id'] ?? null,
                         'qty'        => $item['qty'],
-                        'color'      => $item['color'] ?? null,
-                        'size'       => $item['size'] ?? null,
                         'price'      => $item['price'],
                     ]);
                 }
@@ -332,7 +320,7 @@ class CartService
 
         $cart = Session::get('cart', []);
         $variantIdStr = $variantId ?? '0';
-        $uniqueId = md5($productId . '_' . $variantIdStr);
+        $uniqueId = $productId . ':' . $variantIdStr;
         
         return isset($cart[$uniqueId]) ? (int) $cart[$uniqueId]['qty'] : 0;
     }

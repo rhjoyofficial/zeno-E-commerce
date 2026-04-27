@@ -56,7 +56,7 @@ class ProductVariant extends Model
 
     public function getFinalPriceAttribute()
     {
-        return $this->discount_price ?: $this->price;
+        return $this->discount_price ?? $this->price;
     }
     protected static function booted()
     {

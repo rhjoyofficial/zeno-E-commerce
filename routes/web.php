@@ -58,7 +58,8 @@ Route::post('/clear-session-notifications', function () {
 Route::controller(HomeController::class)->group(function () {
     Route::get('/', 'index')->name('home');
     Route::get('/about-us', 'aboutUs')->name('about.us');
-    Route::match(['get', 'post'], '/contact-us', 'contactUs')->name('contact.us');
+    Route::get('/contact-us', 'contactUs')->name('contact.us');
+    Route::post('/contact-us', 'sendContactMessage')->name('contact.send');
 });
 
 // Policy Routes
@@ -131,7 +132,6 @@ Route::middleware('guest')->group(function () {
         Route::get('/otp/verify/{token}', 'showOtpForm')->name('otp.verify');
         Route::post('/otp/verify', 'verifyOtp')->name('otp.verify.post')->middleware('throttle:otp-verify');
         Route::post('/otp/resend/{token}', 'resendOtp')->name('otp.resend')->middleware('throttle:otp-resend');
-        Route::get('/otp/resend/{email}', 'resendOtp')->name('otp.resend.get');
     });
 });
 
@@ -217,10 +217,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             ->name('products.variants.checkSkuEdit');
     });
 
-    // Customers
-    Route::resource('customers', CustomerController::class);
+    // Customers — specific routes MUST precede resource to avoid {customer} wildcard shadowing
     Route::get('customers/data', [CustomerController::class, 'data'])->name('customers.data');
     Route::get('customers/export', [CustomerController::class, 'export'])->name('customers.export');
+    Route::resource('customers', CustomerController::class);
 
     // Orders
     Route::resource('orders', OrderController::class);

@@ -15,7 +15,6 @@ class User extends Authenticatable
         'email',
         'password',
         'email_verified_at',
-        'remember_token',
         'role_id',
         'otp',
         'otp_expires_at',
@@ -27,7 +26,11 @@ class User extends Authenticatable
         'last_otp_request_at',
         'status',
         'entry_user_id',
-        'otp_verification_token'
+        'otp_verification_token',
+    ];
+    protected $hidden = [
+        'password',
+        'remember_token',
     ];
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -42,7 +45,7 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Role::class);
     }
-    public function customerProfile()
+    public function profile()
     {
         return $this->hasOne(CustomerProfile::class);
     }

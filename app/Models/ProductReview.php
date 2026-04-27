@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Auth;
+
 class ProductReview extends Model
 {
     use HasFactory;
@@ -13,6 +15,8 @@ class ProductReview extends Model
         'customer_id',
         'product_id',
         'status',
+        'created_by',
+        'updated_by',
     ];
     protected $casts = [
         'status' => 'string',
@@ -29,5 +33,16 @@ class ProductReview extends Model
     public function scopeApproved($query)
     {
         return $query->where('status', 'approved');
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function ($review) {
+            $review->created_by = Auth::id();
+            $review->updated_by = Auth::id();
+        });
+        static::updating(function ($review) {
+            $review->updated_by = Auth::id();
+        });
     }
 }

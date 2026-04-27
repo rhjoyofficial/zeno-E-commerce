@@ -1,6 +1,7 @@
-@extends('layouts.master-layout')
+@extends('layouts.app')
 @section('title', 'About Us')
 @push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css">
 <style>
     @media (min-width: 1280px) {
         .dynamic-margin-start {

@@ -9,7 +9,7 @@
     <div class="flex flex-wrap justify-start gap-4 mb-10">
         <button onclick="filterProducts('all', event)"
             class="px-6 py-4 bg-black text-white text-base font-medium active hover:bg-black hover:text-white filter-btn uppercase tracking-[2px]">All</button>
-        @foreach (App\Models\Category::whereNull('parent_id')->get() as $cat)
+        @foreach ($topCategories as $cat)
         <button onclick="filterProducts('{{ $cat->category_name }}', event)"
             class="px-6 py-4 bg-gray-100 text-black hover:bg-gray-800 hover:text-white text-base font-medium filter-btn uppercase tracking-[2px]">{{
             $cat->category_name }}
@@ -17,9 +17,6 @@
         @endforeach
     </div>
 
-    @php
-    $products = $section->getProducts();
-    @endphp
     @include('products.index', ['products' => $products])
 
     <!-- Show More Button -->

@@ -6,14 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\HomeSection;
 use App\Models\HomeSectionItem;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\HomeSectionRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class HomeSectionController extends Controller
 {
+    public function __construct(private ImageService $imageService) {}
+
     public function index()
     {
         $homeSections = HomeSection::orderBy('order')->get();
@@ -38,16 +40,15 @@ class HomeSectionController extends Controller
 
             // Handle banner image upload for fashion type
             if ($request->type === 'fashion' && $request->hasFile('banner_image')) {
-                $data['banner_image'] = $request->file('banner_image')->store('home-sections', 'public');
+                $data['banner_image'] = $this->imageService->store($request->file('banner_image'), 'home-sections');
             }
 
             $homeSection = HomeSection::create($data);
 
-            // Create slider items for fashion type
             if ($request->type === 'fashion' && $request->has('items')) {
                 foreach ($request->items as $itemData) {
                     if (isset($itemData['image'])) {
-                        $itemData['image'] = $itemData['image']->store('home-section-items', 'public');
+                        $itemData['image'] = $this->imageService->store($itemData['image'], 'home-section-items');
                     }
                     $itemData['home_section_id'] = $homeSection->id;
                     $itemData['created_by'] = Auth::id();
@@ -103,14 +104,9 @@ class HomeSectionController extends Controller
 
             // Handle banner image upload
             if ($request->hasFile('banner_image')) {
-                // Delete old banner image if exists
-                if ($homeSection->banner_image) {
-                    Storage::disk('public')->delete($homeSection->banner_image);
-                }
-                $data['banner_image'] = $request->file('banner_image')->store('home-sections', 'public');
+                $data['banner_image'] = $this->imageService->replace($homeSection->banner_image, $request->file('banner_image'), 'home-sections');
             } elseif ($request->type === 'new_arrivals' && $homeSection->banner_image) {
-                // Remove banner image if switching from fashion to new arrivals
-                Storage::disk('public')->delete($homeSection->banner_image);
+                $this->imageService->delete($homeSection->banner_image);
                 $data['banner_image'] = null;
             }
 
@@ -130,15 +126,9 @@ class HomeSectionController extends Controller
                             ->first();
 
                         if ($item) {
-                            // Handle image update
                             if (isset($itemData['image']) && $itemData['image'] instanceof \Illuminate\Http\UploadedFile) {
-                                // Delete old image
-                                if ($item->image) {
-                                    Storage::disk('public')->delete($item->image);
-                                }
-                                $itemData['image'] = $itemData['image']->store('home-section-items', 'public');
+                                $itemData['image'] = $this->imageService->replace($item->image, $itemData['image'], 'home-section-items');
                             } else {
-                                // Keep existing image
                                 $itemData['image'] = $item->image;
                             }
 
@@ -147,9 +137,8 @@ class HomeSectionController extends Controller
                             $existingItemIds[] = $item->id;
                         }
                     } else {
-                        // New item
                         if (isset($itemData['image'])) {
-                            $itemData['image'] = $itemData['image']->store('home-section-items', 'public');
+                            $itemData['image'] = $this->imageService->store($itemData['image'], 'home-section-items');
                         }
                         $itemData['created_by'] = Auth::id();
 
@@ -164,18 +153,13 @@ class HomeSectionController extends Controller
                     ->get();
 
                 foreach ($itemsToDelete as $itemToDelete) {
-                    if ($itemToDelete->image) {
-                        Storage::disk('public')->delete($itemToDelete->image);
-                    }
+                    $this->imageService->delete($itemToDelete->image);
                     $itemToDelete->delete();
                 }
             } elseif ($homeSection->type === 'new_arrivals') {
-                // Delete all items if switching from fashion to new arrivals
                 $itemsToDelete = HomeSectionItem::where('home_section_id', $homeSection->id)->get();
                 foreach ($itemsToDelete as $itemToDelete) {
-                    if ($itemToDelete->image) {
-                        Storage::disk('public')->delete($itemToDelete->image);
-                    }
+                    $this->imageService->delete($itemToDelete->image);
                     $itemToDelete->delete();
                 }
             }
@@ -196,9 +180,8 @@ class HomeSectionController extends Controller
 
     public function destroy(HomeSection $homeSection)
     {
-        if ($homeSection->banner_image) {
-            Storage::delete('public/' . $homeSection->banner_image);
-        }
+        $this->imageService->delete($homeSection->banner_image);
+        $homeSection->items()->each(fn($item) => $this->imageService->delete($item->image));
         $homeSection->items()->delete();
         $homeSection->delete();
         return redirect()->route('admin.home-sections.index')->with('success', 'Section deleted.');

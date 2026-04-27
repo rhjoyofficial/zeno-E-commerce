@@ -167,7 +167,7 @@
                                                     <div class="ml-4">
                                                         <div class="text-sm font-medium text-gray-900">{{ $product->title }}</div>
                                                         <div class="text-sm text-gray-500">
-                                                            {{ Str::limit($product->short_des, 30) }}
+                                                            {{ Str::limit($product->short_description, 30) }}
                                                         </div>
                                                     </div>
                                                 </div>

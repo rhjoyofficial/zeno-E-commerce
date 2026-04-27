@@ -16,7 +16,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        $customers = User::with('customerProfile')
+        $customers = User::with('profile')
             ->whereHas('role', function ($query) {
                 $query->where('slug', 'customer');
             })->paginate(20);
@@ -28,7 +28,7 @@ class CustomerController extends Controller
      */
     public function data(Request $request)
     {
-        $query = User::with(['customerProfile', 'orders'])
+        $query = User::with(['profile', 'orders'])
             ->whereHas('role', function ($q) {
                 $q->where('slug', 'customer');
             })
@@ -45,8 +45,8 @@ class CustomerController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhereHas('profile', function ($q) use ($search) {
-                        $q->where('cus_phone', 'like', "%{$search}%")
-                            ->orWhere('cus_name', 'like', "%{$search}%");
+                        $q->where('phone', 'like', "%{$search}%")
+                            ->orWhere('name', 'like', "%{$search}%");
                     });
             });
         }
@@ -89,24 +89,15 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'cus_name' => 'required|string|max:100',
-            'cus_add' => 'required|string|max:500',
-            'cus_city' => 'required|string|max:50',
-            'cus_state' => 'nullable|string|max:50',
-            'cus_postcode' => 'nullable|string|max:50',
-            'cus_country' => 'nullable|string|max:50',
-            'cus_phone' => 'nullable|string|max:50',
-            'cus_fax' => 'nullable|string|max:50',
-            'ship_name' => 'nullable|string|max:100',
-            'ship_add' => 'nullable|string|max:100',
-            'ship_city' => 'nullable|string|max:100',
-            'ship_state' => 'nullable|string|max:100',
-            'ship_postcode' => 'nullable|string|max:100',
-            'ship_country' => 'nullable|string|max:100',
-            'ship_phone' => 'nullable|string|max:50',
+            'name'         => 'required|string|max:255',
+            'email'        => 'required|string|email|max:255|unique:users',
+            'password'     => 'required|string|min:8|confirmed',
+            'profile_name' => 'required|string|max:100',
+            'address'      => 'required|string|max:500',
+            'city'         => 'required|string|max:50',
+            'state'        => 'nullable|string|max:50',
+            'postal_code'  => 'nullable|string|max:50',
+            'phone'        => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -125,21 +116,13 @@ class CustomerController extends Controller
             ]);
 
             $user->profile()->create([
-                'cus_name' => $request->cus_name,
-                'cus_add' => $request->cus_add,
-                'cus_city' => $request->cus_city,
-                'cus_state' => $request->cus_state,
-                'cus_postcode' => $request->cus_postcode,
-                'cus_country' => $request->cus_country,
-                'cus_phone' => $request->cus_phone,
-                'cus_fax' => $request->cus_fax,
-                'ship_name' => $request->ship_name,
-                'ship_add' => $request->ship_add,
-                'ship_city' => $request->ship_city,
-                'ship_state' => $request->ship_state,
-                'ship_postcode' => $request->ship_postcode,
-                'ship_country' => $request->ship_country,
-                'ship_phone' => $request->ship_phone,
+                'name'        => $request->profile_name,
+                'address'     => $request->address,
+                'city'        => $request->city,
+                'state'       => $request->state,
+                'postal_code' => $request->postal_code,
+                'phone'       => $request->phone,
+                'user_id'     => $user->id,
             ]);
         });
 
@@ -171,24 +154,15 @@ class CustomerController extends Controller
     public function update(Request $request, User $customer)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $customer->id,
-            'password' => 'nullable|string|min:8|confirmed',
-            'cus_name' => 'required|string|max:100',
-            'cus_add' => 'required|string|max:500',
-            'cus_city' => 'required|string|max:50',
-            'cus_state' => 'nullable|string|max:50',
-            'cus_postcode' => 'nullable|string|max:50',
-            'cus_country' => 'nullable|string|max:50',
-            'cus_phone' => 'nullable|string|max:50',
-            'cus_fax' => 'nullable|string|max:50',
-            'ship_name' => 'nullable|string|max:100',
-            'ship_add' => 'nullable|string|max:100',
-            'ship_city' => 'nullable|string|max:100',
-            'ship_state' => 'nullable|string|max:100',
-            'ship_postcode' => 'nullable|string|max:100',
-            'ship_country' => 'nullable|string|max:100',
-            'ship_phone' => 'nullable|string|max:50',
+            'name'         => 'required|string|max:255',
+            'email'        => 'required|string|email|max:255|unique:users,email,' . $customer->id,
+            'password'     => 'nullable|string|min:8|confirmed',
+            'profile_name' => 'required|string|max:100',
+            'address'      => 'required|string|max:500',
+            'city'         => 'required|string|max:50',
+            'state'        => 'nullable|string|max:50',
+            'postal_code'  => 'nullable|string|max:50',
+            'phone'        => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -210,21 +184,12 @@ class CustomerController extends Controller
             $customer->update($updateData);
 
             $profileData = [
-                'cus_name' => $request->cus_name,
-                'cus_add' => $request->cus_add,
-                'cus_city' => $request->cus_city,
-                'cus_state' => $request->cus_state,
-                'cus_postcode' => $request->cus_postcode,
-                'cus_country' => $request->cus_country,
-                'cus_phone' => $request->cus_phone,
-                'cus_fax' => $request->cus_fax,
-                'ship_name' => $request->ship_name,
-                'ship_add' => $request->ship_add,
-                'ship_city' => $request->ship_city,
-                'ship_state' => $request->ship_state,
-                'ship_postcode' => $request->ship_postcode,
-                'ship_country' => $request->ship_country,
-                'ship_phone' => $request->ship_phone,
+                'name'        => $request->profile_name,
+                'address'     => $request->address,
+                'city'        => $request->city,
+                'state'       => $request->state,
+                'postal_code' => $request->postal_code,
+                'phone'       => $request->phone,
             ];
 
             if ($customer->profile) {
@@ -279,8 +244,8 @@ class CustomerController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhereHas('profile', function ($q) use ($search) {
-                        $q->where('cus_phone', 'like', "%{$search}%")
-                            ->orWhere('cus_name', 'like', "%{$search}%");
+                        $q->where('phone', 'like', "%{$search}%")
+                            ->orWhere('name', 'like', "%{$search}%");
                     });
             });
         }
@@ -318,12 +283,12 @@ class CustomerController extends Controller
                     $customer->id,
                     $customer->name,
                     $customer->email,
-                    $customer->profile->cus_phone ?? '',
-                    $customer->profile->cus_add ?? '',
-                    $customer->profile->cus_city ?? '',
-                    $customer->profile->cus_state ?? '',
-                    $customer->profile->cus_postcode ?? '',
-                    $customer->profile->cus_country ?? '',
+                    $customer->profile->phone ?? '',
+                    $customer->profile->address ?? '',
+                    $customer->profile->city ?? '',
+                    $customer->profile->state ?? '',
+                    $customer->profile->postal_code ?? '',
+                    '',
                     $customer->email_verified_at ? 'Verified' : 'Pending',
                     $customer->created_at->format('Y-m-d H:i:s'),
                 ];

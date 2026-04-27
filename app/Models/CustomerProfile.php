@@ -9,14 +9,12 @@ class CustomerProfile extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'cus_name',
-        'cus_address',
-        'cus_city',
-        'cus_state',
-        'cus_postcode',
-        'cus_country',
-        'cus_phone',
-        'cus_fax',
+        'name',
+        'address',
+        'city',
+        'state',
+        'postal_code',
+        'phone',
         'country_id',
         'division_id',
         'district_id',

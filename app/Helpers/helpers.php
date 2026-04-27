@@ -13,11 +13,10 @@ if (!function_exists('getSettings')) {
      */
     function getSettings($key, $default = null)
     {
-        return Cache::rememberForever("setting_{$key}", function () use ($key, $default) {
+        return Cache::remember("setting_{$key}", 3600, function () use ($key, $default) {
             try {
                 return Setting::get($key, $default);
             } catch (\Exception $e) {
-                // Return default if table doesn't exist yet or other error
                 return $default;
             }
         });

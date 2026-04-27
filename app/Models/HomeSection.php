@@ -33,15 +33,6 @@ class HomeSection extends Model
     {
         return $this->belongsTo(Category::class);
     }
-    // In HomeSection model
-    public function products()
-    {
-        return Product::query()
-            ->when($this->category, function ($query) {
-                $query->whereIn('category_id', $this->category->getDescendantIds());
-            });
-    }
-
     // Scope for new arrivals
     public function scopeNewArrivals($query)
     {
@@ -53,42 +44,4 @@ class HomeSection extends Model
         return $query->where('status', 'active');
     }
 
-    // Helper to get products for the section
-    public function getProducts()
-    {
-        $products = collect();
-
-        if ($this->type === 'new_arrivals') {
-            $products = Product::with(['primaryImage', 'category', 'tags'])
-                ->active()
-                ->latest()
-                ->take(8)
-                ->get();
-        } elseif ($this->type === 'fashion' && $this->category) {
-            // Get all descendant category IDs (you'll need to implement getDescendantIds in Category model)
-            $categoryIds = $this->category->getDescendantIds();
-            $products = Product::with(['primaryImage', 'category', 'tags'])
-                ->whereIn('category_id', $categoryIds)
-                ->active()
-                ->take(8)
-                ->get();
-        }
-
-        // Map products to the expected format
-        return $products->map(function ($product) {
-            return [
-                'id'            => $product->id,
-                'image'         => $product->image_path,
-                'title'         => $product->title,
-                'price'         => $product->price,
-                'discountPrice' => $product->discount_price ?: null,
-                'badge'         => $product->discount ? 'Sale' : 'New',
-                'stock'         => $product->stock_quantity > 0,
-                'categories'    => $product->category ? [$product->category->category_name] : [],
-                'tags'          => $product->tags->pluck('name')->toArray(),
-                'avg_rating'    => $product->avg_rating,
-                'slug'          => $product->slug,
-            ];
-        });
-    }
 }

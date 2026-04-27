@@ -46,22 +46,32 @@ class Category extends Model
         return $query->whereNull('parent_id');
     }
 
-    public function getCategoryNameAttribute()
-    {
-        return $this->category_name;
-    }
+    private static ?array $categoryParentMap = null;
 
-    public function getDescendantIds()
+    public function getDescendantIds(): array
     {
-        $ids = [$this->id];
-        $children = $this->children;
-        foreach ($children as $child) {
-            $ids = array_merge($ids, $child->getDescendantIds());
+        // Load all categories once per request to avoid N+1
+        if (static::$categoryParentMap === null) {
+            static::$categoryParentMap = static::pluck('parent_id', 'id')->all();
         }
+
+        $ids = [];
+        $queue = [$this->id];
+
+        while (!empty($queue)) {
+            $currentId = array_shift($queue);
+            $ids[] = $currentId;
+            foreach (static::$categoryParentMap as $childId => $parentId) {
+                if ($parentId === $currentId) {
+                    $queue[] = $childId;
+                }
+            }
+        }
+
         return $ids;
     }
 
-    protected static function booted()
+    protected static function booted(): void
     {
         static::creating(function ($category) {
             $category->created_by = Auth::id() ?? null;
@@ -69,6 +79,12 @@ class Category extends Model
         });
         static::updating(function ($category) {
             $category->updated_by = Auth::id() ?? null;
+        });
+        static::saved(function () {
+            static::$categoryParentMap = null;
+        });
+        static::deleted(function () {
+            static::$categoryParentMap = null;
         });
     }
 }

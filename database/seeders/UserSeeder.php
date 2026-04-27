@@ -37,14 +37,12 @@ class UserSeeder extends Seeder
         CustomerProfile::firstOrCreate(
             ['user_id' => $admin->id],
             [
-                'cus_name'      => 'Admin User',
-                'cus_address'   => '123 Admin Street, Dhaka',
-                'cus_city'      => 'Dhaka',
-                'cus_state'     => 'Dhaka Division',
-                'cus_postcode'  => '1200',
-                'cus_country'   => 'Bangladesh',
-                'cus_phone'     => '01700000001',
-                'cus_fax'       => null,
+                'name'          => 'Admin User',
+                'address'       => '123 Admin Street, Dhaka',
+                'city'          => 'Dhaka',
+                'state'         => 'Dhaka Division',
+                'postal_code'   => '1200',
+                'phone'         => '01700000001',
                 'entry_user_id' => $admin->id,
             ]
         );
@@ -71,14 +69,12 @@ class UserSeeder extends Seeder
         CustomerProfile::firstOrCreate(
             ['user_id' => $customer->id],
             [
-                'cus_name'      => 'Customer User',
-                'cus_address'   => '456 Green Road, Chittagong',
-                'cus_city'      => 'Chittagong',
-                'cus_state'     => 'Chittagong Division',
-                'cus_postcode'  => '4000',
-                'cus_country'   => 'Bangladesh',
-                'cus_phone'     => '01800000002',
-                'cus_fax'       => null,
+                'name'          => 'Customer User',
+                'address'       => '456 Green Road, Chittagong',
+                'city'          => 'Chittagong',
+                'state'         => 'Chittagong Division',
+                'postal_code'   => '4000',
+                'phone'         => '01800000002',
                 'entry_user_id' => $admin->id,
             ]
         );
@@ -91,15 +87,13 @@ class UserSeeder extends Seeder
             CustomerProfile::firstOrCreate(
                 ['user_id' => $user->id],
                 [
-                    'cus_name'      => $user->name,
-                    'cus_address'   => fake()->streetAddress(),
-                    'cus_city'      => fake()->city(),
-                    'cus_state'     => 'Dhaka Division',
-                    'cus_postcode'  => fake()->postcode(),
-                    'cus_country'   => 'Bangladesh',
-                    'cus_phone'     => '017' . fake()->numerify('########'),
-                    'cus_fax'       => null,
-                    'entry_user_id' => $admin->id,
+                    'name'          => $user->name,
+                    'address'       => fake()->streetAddress(),
+                    'city'          => fake()->city(),
+                    'state'         => 'Dhaka Division',
+                    'postal_code'   => fake()->postcode(),
+                        'phone'         => '017' . fake()->numerify('########'),
+                        'entry_user_id' => $admin->id,
                 ]
             );
         });

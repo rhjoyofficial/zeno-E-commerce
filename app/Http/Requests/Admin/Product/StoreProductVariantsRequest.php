@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Requests\Admin\Product;
-use App\Http\Requests\Request;
+
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreProductVariantsRequest extends FormRequest

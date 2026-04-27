@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Auth;
 
 class Coupon extends Model
 {
@@ -16,8 +17,9 @@ class Coupon extends Model
         'valid_from',
         'valid_to',
         'usage_limit',
-        'used_count',
         'is_active',
+        'created_by',
+        'updated_by',
     ];
     protected $casts = [
         'value' => 'decimal:2',
@@ -40,5 +42,16 @@ class Coupon extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function ($coupon) {
+            $coupon->created_by = Auth::id();
+            $coupon->updated_by = Auth::id();
+        });
+        static::updating(function ($coupon) {
+            $coupon->updated_by = Auth::id();
+        });
     }
 }

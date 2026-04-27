@@ -168,8 +168,8 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-base text-gray-900">{{ $customer->email }}</div>
                                         <div class="text-base text-gray-500">
-                                            @if ($customer->customerProfile && $customer->customerProfile->phone)
-                                                {{ $customer->customerProfile->phone }}
+                                            @if ($customer->profile && $customer->profile->phone)
+                                                {{ $customer->profile->phone }}
                                             @else
                                                 <span class="text-gray-400">Not provided</span>
                                             @endif
@@ -178,12 +178,12 @@
 
                                     <!-- Location Info -->
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        @if ($customer->customerProfile)
+                                        @if ($customer->profile)
                                             <div class="text-base text-gray-900">
-                                                {{ $customer->customerProfile->city ?? 'N/A' }}
+                                                {{ $customer->profile->city ?? 'N/A' }}
                                             </div>
                                             <div class="text-base text-gray-500">
-                                                {{ Str::limit($customer->customerProfile->address ?? 'N/A', 20) }}
+                                                {{ Str::limit($customer->profile->address ?? 'N/A', 20) }}
                                             </div>
                                         @else
                                             <span class="text-gray-400">No profile</span>

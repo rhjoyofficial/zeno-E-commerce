@@ -117,10 +117,6 @@ class Product extends Model
     {
         return $query->where('stock_quantity', '>', 0);
     }
-    public function getShortDesAttribute()
-    {
-        return $this->short_description;
-    }
     public function getFinalPriceAttribute()
     {
         return $this->discount && $this->discount_price

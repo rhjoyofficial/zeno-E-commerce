@@ -4,60 +4,52 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class BrandController extends Controller
 {
-    // Index - List all brands
+    public function __construct(private ImageService $imageService) {}
+
     public function index()
     {
         $brands = Brand::latest()->paginate(20);
         return view('admin.brands.index', compact('brands'));
     }
 
-    // Show - find brand by id
     public function show($id)
     {
         $brand = Brand::with('products')->findOrFail($id);
-        // dd($brand);
         return view('admin.brands.brand-products', compact('brand'));
     }
-    // Store - Create new brand
+
     public function store(Request $request)
     {
         $request->validate([
             'brand_name' => 'required|string|max:50',
-            'brandImg' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'brandImg'   => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $imagePath = $request->file('brandImg')->store('images/brands', 'public');
-
         Brand::create([
-            'brand_name' => $request->brand_name,
-            'brand_image' => $imagePath,
+            'brand_name'  => $request->brand_name,
+            'brand_image' => $this->imageService->store($request->file('brandImg'), 'images/brands'),
         ]);
 
         return redirect()->back()->with('success', 'Brand created successfully!');
     }
 
-    // Update - Edit existing brand
     public function update(Request $request, $id)
     {
         $request->validate([
             'brand_name' => 'required|string|max:50',
-            'brandImg' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'brandImg'   => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         $brand = Brand::findOrFail($id);
-        $data = ['brand_name' => $request->brand_name];
+        $data  = ['brand_name' => $request->brand_name];
 
         if ($request->hasFile('brandImg')) {
-            // Delete old image if exists
-            if ($brand->brand_image) {
-                Storage::delete('public/' . $brand->brand_image);
-            }
-            $data['brand_image'] = $request->file('brandImg')->store('images/brands', 'public');
+            $data['brand_image'] = $this->imageService->replace($brand->brand_image, $request->file('brandImg'), 'images/brands');
         }
 
         $brand->update($data);

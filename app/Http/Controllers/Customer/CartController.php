@@ -17,62 +17,69 @@ class CartController extends Controller
         $this->cartService = $cartService;
     }
 
-    /**
-     * Add product to cart (DB or Session based on Auth).
-     */
     public function addToCart(Request $request)
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'variant_id' => 'nullable|exists:product_variants,id',
-            'qty'   => 'required|integer|min:1',
+            'qty'        => 'required|integer|min:1',
         ]);
 
         $response = $this->cartService->addToCart($request->all());
 
-        return response()->json($response);
+        if ($request->expectsJson()) {
+            return response()->json($response);
+        }
+
+        if ($response['success']) {
+            return redirect()->back()->with('success', $response['message']);
+        }
+
+        return redirect()->back()->with('error', $response['message']);
     }
 
-    /**
-     * Show cart items (DB for Auth, Session for Guest).
-     */
     public function index()
     {
-        $data = $this->cartService->getCartItems();
-        $cartItems = $data['cartItems'];
+        $data       = $this->cartService->getCartItems();
+        $cartItems  = $data['cartItems'];
         $totalItems = $data['totalItems'];
 
         return view('customer.cart-item', compact('cartItems', 'totalItems'));
     }
 
-    /**
-     * Update qty of a cart item.
-     */
     public function update(Request $request, $id)
     {
         $request->validate(['qty' => 'required|integer|min:1']);
 
         $response = $this->cartService->updateCart($id, $request->qty);
 
-        return response()->json($response);
+        if ($request->expectsJson()) {
+            return response()->json($response);
+        }
+
+        if ($response['success']) {
+            return redirect()->back()->with('success', $response['message']);
+        }
+
+        return redirect()->back()->with('error', $response['message']);
     }
 
-    /**
-     * Remove item from cart.
-     */
     public function remove($id)
     {
         $response = $this->cartService->removeCart($id);
 
-        return response()->json($response);
+        if (request()->expectsJson()) {
+            return response()->json($response);
+        }
+
+        return redirect()->back()->with('success', $response['message']);
     }
 
-    /**
-     * Sync session cart to DB after login.
-     */
     public function syncCart()
     {
         $this->cartService->syncCart();
+
+        return redirect()->back();
     }
 
     public function getVariantPrice(Request $request)

@@ -165,7 +165,7 @@ class ProductService
     protected function generateSku(string $prefix, string $title): string
     {
         $prefix = strtoupper(substr(preg_replace('/[^a-z]/i', '', $title), 0, 3));
-        $random = mt_rand(10000, 99999);
+        $random = random_int(10000, 99999);
         return $prefix . '-' . $random;
     }
 }

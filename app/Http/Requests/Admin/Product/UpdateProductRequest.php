@@ -21,8 +21,8 @@ class UpdateProductRequest extends FormRequest
             'discount' => 'nullable|boolean',
             'discount_price' => 'nullable|required_if:discount,true|numeric|min:0|lt:price',
             'is_new_arrival' => 'nullable|boolean',
-            'stock_quantity' => 'nullable|integer|min:0|lte:stock_quantity',
-            'stock_alert' => 'nullable|integer|min:0',
+            'stock_quantity' => 'nullable|integer|min:0',
+            'stock_alert' => 'nullable|integer|min:0|lte:stock_quantity',
             'status' => 'required|in:active,inactive,discontinued',
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
@@ -44,7 +44,7 @@ class UpdateProductRequest extends FormRequest
             'title.max' => 'The product title cannot be more than :max characters.',
 
             // Short Description
-            'short_des.max' => 'The short description cannot be more than :max characters.',
+            'short_description.max' => 'The short description cannot be more than :max characters.',
 
             // Price
             'price.required' => 'The product price is required.',

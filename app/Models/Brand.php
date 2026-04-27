@@ -28,10 +28,6 @@ class Brand extends Model
     {
         return $query->where('status', 'active');
     }
-    public function getBrandNameAttribute()
-    {
-        return $this->brand_name;
-    }
     protected static function booted()
     {
         static::creating(function ($brand) {

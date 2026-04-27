@@ -63,9 +63,6 @@
             <h2 class="text-[40px] font-normal text-black mb-2 font-megumi tracking-tight ">
                 {{ $section->section_subtitle ?? 'Your Fashion Game' }}</h2>
         </div>
-        @php
-            $products = $section->getProducts();
-        @endphp
         @include('products.index', ['products' => $products])
 
         <div class="mt-16 text-center">

@@ -1,6 +1,7 @@
-@extends('layouts.master-layout')
+@extends('layouts.app')
 @section('title', 'Premium Comfort Sneakers')
 @push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css">
 <style>
     .splide__slide img {
         width: 100%;
@@ -16,10 +17,6 @@
         fill: white;
     }
 </style>
-@endpush
-@push('head-scripts')
-<!-- Add Splide CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css">
 @endpush
 @section('content')
 

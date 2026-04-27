@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Setting extends Model
 {
@@ -40,9 +41,18 @@ class Setting extends Model
      */
     public static function set(string $key, $value, $group = 'general')
     {
-        return self::updateOrCreate(
+        $setting = self::updateOrCreate(
             ['key' => $key],
             ['value' => $value, 'group' => $group]
         );
+        Cache::forget("setting_{$key}");
+        return $setting;
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function ($setting) {
+            Cache::forget("setting_{$setting->key}");
+        });
     }
 }

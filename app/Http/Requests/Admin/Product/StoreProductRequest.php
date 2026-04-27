@@ -44,7 +44,7 @@ class StoreProductRequest extends FormRequest
             'title.max' => 'The product title cannot be more than :max characters.',
 
             // Short Description
-            'short_des.max' => 'The short description cannot be more than :max characters.',
+            'short_description.max' => 'The short description cannot be more than :max characters.',
 
             // Price
             'price.required' => 'The product price is required.',
