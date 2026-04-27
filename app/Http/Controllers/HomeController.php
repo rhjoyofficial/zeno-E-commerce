@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Services\HomeSectionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class HomeController extends Controller
 {
@@ -23,7 +24,9 @@ class HomeController extends Controller
 
         $sectionProducts = [];
         foreach ($homeSections as $section) {
-            $sectionProducts[$section->id] = $this->homeSectionService->getProductsForSection($section);
+            $rawProducts = $this->homeSectionService->getProductsForSection($section, 8);
+
+            $sectionProducts[$section->id] = $this->formatForCard($rawProducts);
         }
 
         $topCategories = Category::whereNull('parent_id')->active()->get();
@@ -60,16 +63,43 @@ class HomeController extends Controller
     }
     public function sendContactMessage(Request $request)
     {
-        // Validate the request data
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'message' => 'required|string|max:1000',
         ]);
-
-        // Here you would typically send the message via email or store it in the database
-        // For demonstration, we'll just return a success message
-
         return redirect()->back()->with('success', 'Your message has been sent successfully!');
+    }
+
+    private function formatForCard($products): array
+    {
+        return collect($products)->map(fn($product) => [
+            'id'            => $product->id,
+            'image'         => $product->primaryImage?->image_path ?? 'images/products/default.jpg',
+            'title'         => $product->title,
+            'description'   => $product->short_description ?? '',
+            'price'         => $product->price,
+            'discountPrice' => $product->discount_price ?: null,
+            'badge'         => $product->discount_price ? 'Sale' : 'New',
+            'stock'         => $product->stock_quantity > 0,
+            'hasVariants'   => (bool) $product->has_variants,
+            'categories'    => $product->category ? [$product->category->category_name] : [],
+            'images'        => ($product->images ?? collect())->map(fn($img) => [
+                'path'       => Storage::url($img->image_path),
+                'is_primary' => (bool) $img->is_primary,
+            ])->values()->all(),
+            'variants'      => $product->has_variants
+                ? ($product->activeVariants ?? collect())->map(fn($v) => [
+                    'id'             => $v->id,
+                    'color_id'       => $v->color_id,
+                    'color_name'     => $v->color?->name,
+                    'color_hex'      => $v->color?->hex_code,
+                    'size_id'        => $v->size_id,
+                    'size_name'      => $v->size?->name,
+                    'price'          => $v->price,
+                    'stock_quantity' => $v->stock_quantity,
+                ])->values()->all()
+                : [],
+        ])->all();
     }
 }

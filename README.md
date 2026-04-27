@@ -88,7 +88,7 @@ zeno-E-commerce
 │  │  ├─ District.php
 │  │  ├─ Division.php
 │  │  ├─ HomeSection.php
-│  │  ├─ HomeSectionItem.php
+│  │  ├─ HomeSectionCategory.php
 │  │  ├─ MegaMenuContent.php
 │  │  ├─ NavigationMenu.php
 │  │  ├─ NavigationMenuItem.php
@@ -184,7 +184,7 @@ zeno-E-commerce
 │  │  ├─ 2025_08_11_190522_create_offers_table.php
 │  │  ├─ 2025_08_30_191409_create_navigation_menus_table.php
 │  │  ├─ 2025_09_29_165011_create_home_sections_table.php
-│  │  └─ 2025_09_29_165022_create_home_section_items_table.php
+│  │  └─ 2025_09_29_165022_create_home_section_categories_table.php
 │  └─ seeders
 │     ├─ BrandSeeder.php
 │     ├─ CategorySeeder.php

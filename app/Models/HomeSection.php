@@ -26,7 +26,7 @@ class HomeSection extends Model
 
     public function items()
     {
-        return $this->hasMany(HomeSectionItem::class)->orderBy('order');
+        return $this->hasMany(HomeSectionCategory::class)->orderBy('order');
     }
 
     public function category()
@@ -43,5 +43,4 @@ class HomeSection extends Model
     {
         return $query->where('status', 'active');
     }
-
 }

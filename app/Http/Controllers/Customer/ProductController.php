@@ -16,8 +16,12 @@ class ProductController extends Controller
             ->latest()
             ->paginate(12);
 
+        $products->setCollection(
+            collect($this->formatForCard($products->items()))
+        );
+
         return view('frontend.product-list', [
-            'products' => $this->formatForCard($products),
+            'products' => $products,
         ]);
     }
 
@@ -32,9 +36,11 @@ class ProductController extends Controller
             ->limit(4)
             ->get();
 
-        return view('frontend.product-details', [
-            'product'  => $product,
-            'products' => $this->formatForCard($related),
+        $formattedRelated = $this->formatForCard($related);
+
+        return view('frontend.product-list', [
+            'product' => $product,
+            'products' => $formattedRelated,
         ]);
     }
 

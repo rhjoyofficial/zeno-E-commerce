@@ -5,6 +5,7 @@ namespace App\View\Components;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
+use Illuminate\Support\Collection;
 
 class ProductCard extends Component
 {
@@ -16,6 +17,8 @@ class ProductCard extends Component
     public ?string $badge;
     public bool $stock;
     public array $categories;
+    public bool $hasVariants;
+    public mixed $variants;
 
     /**
      * Create a new component instance.
@@ -28,7 +31,9 @@ class ProductCard extends Component
         ?float $discountPrice = null,
         ?string $badge = null,
         bool $stock = true,
-        array $categories = []
+        array $categories = [],
+        bool $hasVariants = false,
+        $variants = []
     ) {
         $this->id = $id;
         $this->image = $image;
@@ -38,7 +43,10 @@ class ProductCard extends Component
         $this->badge = $badge;
         $this->stock = $stock;
         $this->categories = $categories;
+        $this->hasVariants = $hasVariants;
+        $this->variants = $variants;
     }
+
     /**
      * Get the view / contents that represent the component.
      */

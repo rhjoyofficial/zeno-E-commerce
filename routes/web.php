@@ -1,51 +1,37 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 use Illuminate\Support\Facades\Gate;
 
-use App\Http\Controllers\{
-    HomeController,
-    ProfileController,
-};
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProfileController;
 
-use App\Http\Controllers\Public\{
-    PolicyController,
-};
+use App\Http\Controllers\Public\PolicyController;
 
-use App\Http\Controllers\Auth\{
-    LoginController,
-    RegisterController,
-    OTPVerificationController,
-    PasswordResetLinkController,
-    NewPasswordController
-};
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\OTPVerificationController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
 
-use App\Http\Controllers\Customer\{
-    CartController,
-    WishlistController,
-    CheckoutController,
-    CustomerDashboardController,
-    ProductController as CustomerProductController
-};
+use App\Http\Controllers\Customer\CartController;
+use App\Http\Controllers\Customer\WishlistController;
+use App\Http\Controllers\Customer\CheckoutController;
+use App\Http\Controllers\Customer\CustomerDashboardController;
+use App\Http\Controllers\Customer\ProductController as CustomerProductController;
 
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\BrandController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\HomeSectionController;
+use App\Http\Controllers\Admin\NavigationController as AdminNavigationController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SettingController;
 
-use App\Http\Controllers\Admin\{
-    AdminDashboardController,
-    BrandController,
-    CategoryController,
-    CustomerController,
-    HomeSectionController,
-    NavigationController as AdminNavigationController,
-    OrderController,
-    ReportController,
-    SettingController
-};
-
-use App\Http\Controllers\Admin\Product\{
-    ProductController as AdminProductController,
-    ProductVariantController
-};
+use App\Http\Controllers\Admin\Product\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\Product\ProductVariantController;
 use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
 

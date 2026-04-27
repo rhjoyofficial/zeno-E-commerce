@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use App\Models\HomeSection;
-use App\Models\HomeSectionItem;
+use App\Models\HomeSectionCategory;
 use Illuminate\Database\Seeder;
 
 class HomeSectionSeeder extends Seeder
@@ -25,7 +25,7 @@ class HomeSectionSeeder extends Seeder
                 'subtitle' => 'Sharp shirts, denim, chinos, and easy layers.',
                 'section_title' => 'Smart Western Staples',
                 'section_subtitle' => 'For office, campus, travel, and weekends',
-                'banner_image' => 'storage/home-sections/mens-clothing.jpg',
+                'banner_image' => 'storage/sections-banner/mens-clothing.jpg',
                 'category' => "Men's Clothing",
                 'order' => 2,
             ],
@@ -35,7 +35,7 @@ class HomeSectionSeeder extends Seeder
                 'subtitle' => 'Dresses, blouses, palazzos, denim, and soft layering.',
                 'section_title' => 'Modern Everyday Style',
                 'section_subtitle' => 'Western looks with comfortable modest options',
-                'banner_image' => 'storage/home-sections/womens-clothing.jpg',
+                'banner_image' => 'storage/sections-banner/womens-clothing.jpg',
                 'category' => "Women's Clothing",
                 'order' => 3,
             ],
@@ -45,7 +45,7 @@ class HomeSectionSeeder extends Seeder
                 'subtitle' => 'Play-ready western outfits for school, weekends, and parties.',
                 'section_title' => 'Comfort First Kidswear',
                 'section_subtitle' => 'Easy outfits parents can trust',
-                'banner_image' => 'storage/home-sections/kids-clothing.jpg',
+                'banner_image' => 'storage/sections-banner/kids-clothing.jpg',
                 'category' => 'Kids Clothing',
                 'order' => 4,
             ],
@@ -78,14 +78,14 @@ class HomeSectionSeeder extends Seeder
     private function items(HomeSection $section, Category $mainCategory): void
     {
         $mainCategory->children()->orderBy('category_name')->get()->each(function (Category $category, int $index) use ($section) {
-            HomeSectionItem::updateOrCreate(
+            HomeSectionCategory::updateOrCreate(
                 ['home_section_id' => $section->id, 'category_id' => $category->id],
                 [
                     'home_section_id' => $section->id,
                     'category_id' => $category->id,
                     'title' => $category->category_name,
                     'subtitle' => 'Shop curated ' . strtolower($category->category_name),
-                    'image' => 'storage/home-sections/items/' . str($category->category_name)->slug() . '.jpg',
+                    'image' => 'storage/categories/' . str($category->category_name)->slug() . '.jpg',
                     'order' => $index + 1,
                     'status' => 'active',
                 ]

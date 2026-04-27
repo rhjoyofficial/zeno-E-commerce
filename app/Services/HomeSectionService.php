@@ -23,22 +23,22 @@ class HomeSectionService
      * Return the product collection for a given section.
      * All DB hits happen here — zero queries in the view.
      */
-    public function getProductsForSection(HomeSection $section): Collection
+    public function getProductsForSection(HomeSection $section, int $limit = 8): Collection
     {
         if ($section->type === 'new_arrivals') {
-            return Product::with(['primaryImage', 'category'])
+            return Product::with(['variants', 'primaryImage', 'category'])
                 ->active()
                 ->latest()
-                ->take(8)
+                ->take($limit)
                 ->get();
         }
 
         if ($section->type === 'fashion' && $section->category) {
             $categoryIds = $section->category->getDescendantIds();
-            return Product::with(['primaryImage', 'category'])
+            return Product::with(['variants', 'primaryImage', 'category'])
                 ->whereIn('category_id', $categoryIds)
                 ->active()
-                ->take(8)
+                ->take($limit)
                 ->get();
         }
 

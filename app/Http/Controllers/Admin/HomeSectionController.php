@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\HomeSection;
-use App\Models\HomeSectionItem;
+use App\Models\HomeSectionCategory;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use App\Http\Requests\HomeSectionRequest;
@@ -53,7 +53,7 @@ class HomeSectionController extends Controller
                     $itemData['home_section_id'] = $homeSection->id;
                     $itemData['created_by'] = Auth::id();
 
-                    HomeSectionItem::create($itemData);
+                    HomeSectionCategory::create($itemData);
                 }
             }
 
@@ -121,7 +121,7 @@ class HomeSectionController extends Controller
 
                     // Check if this is an existing item (has item_id)
                     if (isset($itemData['item_id']) && $itemData['item_id']) {
-                        $item = HomeSectionItem::where('home_section_id', $homeSection->id)
+                        $item = HomeSectionCategory::where('home_section_id', $homeSection->id)
                             ->where('id', $itemData['item_id'])
                             ->first();
 
@@ -142,13 +142,13 @@ class HomeSectionController extends Controller
                         }
                         $itemData['created_by'] = Auth::id();
 
-                        $newItem = HomeSectionItem::create($itemData);
+                        $newItem = HomeSectionCategory::create($itemData);
                         $existingItemIds[] = $newItem->id;
                     }
                 }
 
                 // Delete items that were removed
-                $itemsToDelete = HomeSectionItem::where('home_section_id', $homeSection->id)
+                $itemsToDelete = HomeSectionCategory::where('home_section_id', $homeSection->id)
                     ->whereNotIn('id', $existingItemIds)
                     ->get();
 
@@ -157,7 +157,7 @@ class HomeSectionController extends Controller
                     $itemToDelete->delete();
                 }
             } elseif ($homeSection->type === 'new_arrivals') {
-                $itemsToDelete = HomeSectionItem::where('home_section_id', $homeSection->id)->get();
+                $itemsToDelete = HomeSectionCategory::where('home_section_id', $homeSection->id)->get();
                 foreach ($itemsToDelete as $itemToDelete) {
                     $this->imageService->delete($itemToDelete->image);
                     $itemToDelete->delete();

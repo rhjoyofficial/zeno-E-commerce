@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('home_section_items', function (Blueprint $table) {
+        Schema::create('home_section_categories', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('home_section_id');
             $table->unsignedBigInteger('category_id')->nullable();
@@ -34,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('home_section_items');
+        Schema::dropIfExists('home_section_categories');
     }
 };
