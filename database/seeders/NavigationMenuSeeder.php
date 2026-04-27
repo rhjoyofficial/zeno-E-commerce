@@ -2,80 +2,90 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\Category;
+use App\Models\MegaMenuContent;
 use App\Models\NavigationMenu;
 use App\Models\NavigationMenuItem;
-use App\Models\MegaMenuContent;
+use Illuminate\Database\Seeder;
 
 class NavigationMenuSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        // Create main navigation menus
-        $menus = [
-            [
-                'name' => 'Men',
-                'slug' => 'men',
-                'position' => 1,
-                'status' => 'active',
-                'is_mega_menu' => true,
-                'mega_menu_type' => 'categories'
-            ],
-            [
-                'name' => 'Women',
-                'slug' => 'women',
-                'position' => 2,
-                'status' => 'active',
-                'is_mega_menu' => true,
-                'mega_menu_type' => 'categories'
-            ],
-            [
-                'name' => 'Kid',
-                'slug' => 'kid',
-                'position' => 3,
-                'status' => 'active',
-                'is_mega_menu' => false
-            ],
-            [
-                'name' => 'Accessories',
-                'slug' => 'accessories',
-                'position' => 4,
-                'status' => 'active',
-                'is_mega_menu' => false
-            ],
-            [
-                'name' => 'Sale',
-                'slug' => 'sale',
-                'position' => 5,
-                'status' => 'active',
-                'is_mega_menu' => false
-            ]
-        ];
+        foreach ([
+            ["Men's Clothing", 'mens-clothing', 1],
+            ["Women's Clothing", 'womens-clothing', 2],
+            ['Kids Clothing', 'kids-clothing', 3],
+            ['New Arrivals', 'new-arrivals', 4],
+        ] as [$name, $slug, $position]) {
+            $category = Category::where('category_name', $name)->first();
 
-        foreach ($menus as $menuData) {
-            $menu = NavigationMenu::create($menuData);
-            
-            // Add sample mega menu content for mega menus
-            if ($menu->is_mega_menu) {
-                MegaMenuContent::create([
-                    'navigation_menu_id' => $menu->id,
-                    'type' => 'categories',
-                    'title' => $menu->name . "'s Categories",
-                    'content' => json_encode([
-                        ['name' => 'Clothing', 'slug' => 'clothing', 'children' => [
-                            ['name' => 'T-Shirts', 'slug' => 't-shirts'],
-                            ['name' => 'Shirts', 'slug' => 'shirts'],
-                            ['name' => 'Jeans', 'slug' => 'jeans'],
-                            ['name' => 'Shorts', 'slug' => 'shorts']
-                        ]],
-                        ['name' => 'Footwear', 'slug' => 'footwear'],
-                        ['name' => 'Accessories', 'slug' => 'accessories'],
-                        ['name' => 'Sportswear', 'slug' => 'sportswear']
-                    ]),
-                    'columns' => 1,
-                    'order' => 1,
-                    'is_active' => true
-                ]);
+            $menu = NavigationMenu::updateOrCreate(
+                ['slug' => $slug],
+                [
+                    'name' => $name,
+                    'slug' => $slug,
+                    'position' => $position,
+                    'status' => 'active',
+                    'is_mega_menu' => (bool) $category,
+                    'mega_menu_type' => $category ? 'categories' : null,
+                    'mega_menu_content' => $category ? ['category_id' => $category->id] : null,
+                ]
+            );
+
+            if ($category) {
+                $category->children()->orderBy('category_name')->get()->each(function (Category $child, int $index) use ($menu) {
+                    NavigationMenuItem::updateOrCreate(
+                        ['navigation_menu_id' => $menu->id, 'category_id' => $child->id, 'parent_id' => null],
+                        [
+                            'navigation_menu_id' => $menu->id,
+                            'parent_id' => null,
+                            'title' => $child->category_name,
+                            'url' => '/products?category=' . $child->id,
+                            'route' => null,
+                            'category_id' => $child->id,
+                            'brand_id' => null,
+                            'icon' => null,
+                            'order' => $index + 1,
+                            'is_featured' => $index < 2,
+                            'featured_image' => $child->category_image,
+                            'description' => 'Shop ' . strtolower($child->category_name),
+                            'status' => 'active',
+                        ]
+                    );
+                });
+
+                MegaMenuContent::updateOrCreate(
+                    ['navigation_menu_id' => $menu->id, 'type' => 'categories'],
+                    [
+                        'navigation_menu_id' => $menu->id,
+                        'type' => 'categories',
+                        'title' => $name . ' Categories',
+                        'content' => ['category_id' => $category->id],
+                        'columns' => 3,
+                        'order' => 1,
+                        'is_active' => true,
+                    ]
+                );
+            } else {
+                NavigationMenuItem::updateOrCreate(
+                    ['navigation_menu_id' => $menu->id, 'title' => 'Latest Products'],
+                    [
+                        'navigation_menu_id' => $menu->id,
+                        'parent_id' => null,
+                        'title' => 'Latest Products',
+                        'url' => '/products?sort=new',
+                        'route' => null,
+                        'category_id' => null,
+                        'brand_id' => null,
+                        'icon' => null,
+                        'order' => 1,
+                        'is_featured' => true,
+                        'featured_image' => null,
+                        'description' => 'Fresh arrivals',
+                        'status' => 'active',
+                    ]
+                );
             }
         }
     }

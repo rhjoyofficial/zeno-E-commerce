@@ -14,21 +14,24 @@ return new class extends Migration
         Schema::create('customer_profiles', function (Blueprint $table) {
             $table->id();
 
-            $table->string('cus_name', 100);
-            $table->string('cus_address', 500);
-            $table->string('cus_city', 50);
-            $table->string('cus_state', 50)->nullable();
-            $table->string('cus_postcode', 50)->nullable();
-            $table->string('cus_country', 50)->nullable();
-            $table->string('cus_phone', 50)->nullable();
-            $table->string('cus_fax', 50)->nullable();
+            $table->string('name', 100);
+            $table->string('address', 500);
+            $table->string('city', 50);
+            $table->string('state', 50)->nullable();
+            $table->string('postal_code', 50)->nullable();
+            $table->string('phone', 50)->nullable();
+            $table->unsignedBigInteger('country_id')->nullable();
+            $table->unsignedBigInteger('division_id')->nullable();
+            $table->unsignedBigInteger('district_id')->nullable();
 
-            $table->unsignedInteger('entry_user_id')->nullable();
+            $table->unsignedBigInteger('entry_user_id')->nullable();
             $table->unsignedBigInteger('user_id')->unique();
 
             $table->foreign('user_id')->references('id')->on('users')
                 ->restrictOnDelete()
                 ->cascadeOnUpdate();
+            $table->foreign('entry_user_id')->references('id')->on('users')
+                ->nullOnDelete();
 
             $table->timestamps();
         });

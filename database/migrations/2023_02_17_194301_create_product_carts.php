@@ -16,22 +16,20 @@ return new class extends Migration
             $table->unsignedBigInteger('product_id');
             $table->unsignedBigInteger('variant_id')->nullable();
 
-            $table->string('color', 200)->nullable();
-            $table->string('size', 200)->nullable();
             $table->unsignedInteger('qty')->default(1);
             $table->decimal('price', 10, 2);
             $table->string('cart_key')->unique();
 
             $table->foreign('product_id')->references('id')->on('products')
-                ->restrictOnDelete()
+                ->cascadeOnDelete()
                 ->restrictOnUpdate();
 
             $table->foreign('user_id')->references('id')->on('users')
-                ->restrictOnDelete()
+                ->cascadeOnDelete()
                 ->cascadeOnUpdate();
 
             $table->foreign('variant_id')->references('id')->on('product_variants')
-                ->cascadeOnDelete()
+                ->nullOnDelete()
                 ->cascadeOnUpdate();
 
             $table->timestamp('created_at')->useCurrent();

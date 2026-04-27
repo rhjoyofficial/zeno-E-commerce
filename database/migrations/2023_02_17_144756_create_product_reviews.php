@@ -20,6 +20,8 @@ return new class extends Migration
             $table->foreign('customer_id')->references('id')->on('customer_profiles')->restrictOnDelete()->restrictOnUpdate();
             $table->foreign('product_id')->references('id')->on('products')->restrictOnDelete()->restrictOnUpdate();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
         });

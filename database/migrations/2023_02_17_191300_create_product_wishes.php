@@ -14,12 +14,12 @@ return new class extends Migration
             $table->unsignedBigInteger('product_id');
 
             $table->foreign('product_id')->references('id')->on('products')
-                ->restrictOnDelete()
+                ->cascadeOnDelete()
                 ->restrictOnUpdate();
 
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')
-                ->restrictOnDelete()
+                ->cascadeOnDelete()
                 ->cascadeOnUpdate();
 
             $table->string('wish_key')->unique();

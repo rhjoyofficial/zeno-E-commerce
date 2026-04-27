@@ -9,15 +9,18 @@ class SslcommerzAccountSeeder extends Seeder
 {
     public function run(): void
     {
-        SslcommerzAccount::create([
-            'store_id' => 'teststore',
-            'store_passwd' => 'testpass',
-            'currency' => 'USD',
-            'success_url' => 'http://example.com/success',
-            'fail_url' => 'http://example.com/fail',
-            'cancel_url' => 'http://example.com/cancel',
-            'ipn_url' => 'http://example.com/ipn',
-            'init_url' => 'http://example.com/init',
-        ]);
+        SslcommerzAccount::updateOrCreate(
+            ['store_id' => 'zeno_demo_store'],
+            [
+                'store_id' => 'zeno_demo_store',
+                'store_passwd' => 'demo_password',
+                'currency' => 'BDT',
+                'success_url' => url('/payment/success'),
+                'fail_url' => url('/payment/fail'),
+                'cancel_url' => url('/payment/cancel'),
+                'ipn_url' => url('/payment/ipn'),
+                'init_url' => 'https://sandbox.sslcommerz.com/gwprocess/v4/api.php',
+            ]
+        );
     }
 }

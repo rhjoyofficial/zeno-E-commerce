@@ -2,60 +2,31 @@
 
 namespace Database\Seeders;
 
-use App\Models\Division;
 use App\Models\District;
+use App\Models\Division;
 use Illuminate\Database\Seeder;
 
 class DistrictSeeder extends Seeder
 {
     public function run(): void
     {
-        // Map of division name => districts
-        $districtMap = [
-            'Dhaka' => [
-                'Dhaka', 'Gazipur', 'Narayanganj', 'Narsingdi', 'Manikganj',
-                'Munshiganj', 'Kishoreganj', 'Tangail', 'Faridpur', 'Rajbari',
-                'Madaripur', 'Gopalganj', 'Shariatpur',
-            ],
-            'Chittagong' => [
-                'Chittagong', "Cox's Bazar", 'Feni', 'Lakshmipur', 'Noakhali',
-                'Chandpur', 'Comilla', 'Brahmanbaria', 'Rangamati', 'Khagrachhari', 'Bandarban',
-            ],
-            'Rajshahi' => [
-                'Rajshahi', 'Bogra', 'Joypurhat', 'Naogaon', 'Natore',
-                'Chapainawabganj', 'Pabna', 'Sirajganj',
-            ],
-            'Khulna' => [
-                'Khulna', 'Bagerhat', 'Satkhira', 'Jessore', 'Jhenaidah',
-                'Magura', 'Narail', 'Chuadanga', 'Meherpur', 'Kushtia',
-            ],
-            'Barisal' => [
-                'Barisal', 'Bhola', 'Jhalokati', 'Patuakhali', 'Pirojpur', 'Barguna',
-            ],
-            'Sylhet' => [
-                'Sylhet', 'Habiganj', 'Moulvibazar', 'Sunamganj',
-            ],
-            'Rangpur' => [
-                'Rangpur', 'Dinajpur', 'Gaibandha', 'Kurigram', 'Lalmonirhat',
-                'Nilphamari', 'Panchagarh', 'Thakurgaon',
-            ],
-            'Mymensingh' => [
-                'Mymensingh', 'Jamalpur', 'Netrokona', 'Sherpur',
-            ],
+        $districts = [
+            'Dhaka' => ['Dhaka', 'Gazipur', 'Narayanganj'],
+            'Chattogram' => ['Chattogram', 'Coxs Bazar', 'Cumilla'],
+            'Rajshahi' => ['Rajshahi', 'Bogura'],
+            'Khulna' => ['Khulna', 'Jashore'],
+            'Barishal' => ['Barishal'],
+            'Sylhet' => ['Sylhet'],
+            'Rangpur' => ['Rangpur'],
+            'Mymensingh' => ['Mymensingh'],
         ];
 
-        foreach ($districtMap as $divisionName => $districts) {
-            $division = Division::where('name', $divisionName)->first();
-
-            if (!$division) {
-                $this->command->warn("Division '{$divisionName}' not found. Skipping its districts.");
-                continue;
-            }
-
-            foreach ($districts as $districtName) {
-                District::firstOrCreate(
-                    ['name' => $districtName, 'division_id' => $division->id],
-                    ['name' => $districtName, 'division_id' => $division->id]
+        foreach ($districts as $divisionName => $names) {
+            $division = Division::where('name', $divisionName)->firstOrFail();
+            foreach ($names as $name) {
+                District::updateOrCreate(
+                    ['name' => $name, 'division_id' => $division->id],
+                    ['name' => $name, 'division_id' => $division->id]
                 );
             }
         }

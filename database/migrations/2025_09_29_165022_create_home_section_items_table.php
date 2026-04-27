@@ -24,7 +24,7 @@ return new class extends Migration
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->foreign('home_section_id')->references('id')->on('home_sections')->cascadeOnDelete();
-            $table->foreign('category_id')->references('id')->on('categories')->cascadeOnDelete();
+            $table->foreign('category_id')->references('id')->on('categories')->nullOnDelete();
             $table->index('home_section_id');
         });
     }
