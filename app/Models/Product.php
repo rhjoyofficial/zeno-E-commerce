@@ -16,6 +16,7 @@ class Product extends Model
         'price',
         'discount',
         'discount_price',
+        'is_new_arrival',
         'has_variants',
         'stock_alert',
         'stock_quantity',
@@ -30,6 +31,7 @@ class Product extends Model
     protected $casts = [
         'status' => 'string',
         'discount' => 'boolean',
+        'is_new_arrival' => 'boolean',
         'price' => 'decimal:2',
         'discount_price' => 'decimal:2',
         'stock_quantity' => 'integer',
@@ -114,6 +116,10 @@ class Product extends Model
     public function scopeInStock($query)
     {
         return $query->where('stock_quantity', '>', 0);
+    }
+    public function getShortDesAttribute()
+    {
+        return $this->short_description;
     }
     public function getFinalPriceAttribute()
     {

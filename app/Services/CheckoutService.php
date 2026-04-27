@@ -103,24 +103,14 @@ class CheckoutService
      */
     public function processOrder(array $validatedData, array $selectedIds, string $customerIp, ?string $sessionId): array
     {
-        // Validate coupon before opening the transaction
-        $coupon = null;
-        $couponDiscount = 0.0;
-        if (!empty($validatedData['coupon_code'])) {
-            // applyCoupon throws on invalid codes — do this before we touch the DB
-            $vatRate     = $this->getVatRate();
-            $preItems    = $this->getCheckoutItems($selectedIds);
-            $preTotals   = $this->calculateOrderTotals($preItems, $vatRate);
-            $couponDiscount = $this->applyCoupon($validatedData['coupon_code'], $preTotals['subtotal']);
-            $coupon = Coupon::active()->where('code', strtoupper(trim($validatedData['coupon_code'])))->first();
-        }
-
         $userId = Auth::id();
+        $coupon = null;
 
         DB::beginTransaction();
         try {
             // Re-fetch cart items inside transaction so lockForUpdate() actually locks
             $cartItems = $this->getCheckoutItems($selectedIds);
+            $this->lockInventoryForItems($cartItems);
 
             if ($cartItems->count() !== count($selectedIds)) {
                 throw new Exception('Some selected items are no longer available. Please check your cart.');
@@ -129,7 +119,21 @@ class CheckoutService
             $vatRate = $this->getVatRate();
             $totals  = $this->calculateOrderTotals($cartItems, $vatRate);
 
-            if ($coupon) {
+            if (!empty($validatedData['coupon_code'])) {
+                $coupon = Coupon::active()
+                    ->where('code', strtoupper(trim($validatedData['coupon_code'])))
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$coupon) {
+                    throw new Exception('Invalid or expired coupon code.');
+                }
+
+                if ($coupon->min_order_amount && $totals['subtotal'] < (float) $coupon->min_order_amount) {
+                    throw new Exception("This coupon requires a minimum order of {$coupon->min_order_amount}.");
+                }
+
+                $couponDiscount = $this->calculateCouponDiscount($coupon, $totals['subtotal']);
                 $totals['discountTotal'] += $couponDiscount;
                 $totals['grandTotal']    -= $couponDiscount;
                 $totals['grandTotal']     = max(0, $totals['grandTotal']);
@@ -182,6 +186,8 @@ class CheckoutService
                 'customer_ip'         => $customerIp,
                 'shipping_address_id' => $shippingAddress->id,
                 'payment_method'      => $validatedData['payment'],
+                'coupon_id'           => $coupon?->id,
+                'coupon_code'         => $coupon?->code,
                 'subtotal'            => $totals['subtotal'],
                 'discount_amount'     => $totals['discountTotal'],
                 'tax_amount'          => $totals['taxTotal'],
@@ -209,12 +215,11 @@ class CheckoutService
                 $order->update(['status' => 'confirmed']);
             }
 
-            DB::commit();
-
-            // Increment coupon usage outside transaction (non-critical)
             if ($coupon) {
                 $coupon->increment('used_count');
             }
+
+            DB::commit();
 
             return ['success' => true, 'order' => $order];
         } catch (\Exception $e) {
@@ -245,15 +250,8 @@ class CheckoutService
     protected function calculateItemPrices($item, float $vatRate): array
     {
         $basePrice = $item->variant ? $item->variant->price : $item->product->price;
-
-        $effectivePrice = $basePrice;
-        if ($item->variant && $item->variant->discount_price) {
-            $effectivePrice = $item->variant->discount_price;
-        } elseif (!$item->product->has_variants && $item->product->discount_price) {
-            $effectivePrice = $item->product->discount_price;
-        }
-
-        $discountAmount = $basePrice - $effectivePrice;
+        $effectivePrice = $item->variant ? $item->variant->final_price : $item->product->final_price;
+        $discountAmount = max(0, $basePrice - $effectivePrice);
         $taxAmountItem = $effectivePrice * $vatRate;
         $rowTotal = $effectivePrice * $item->qty;
         $rowTotalInclTax = $rowTotal + ($taxAmountItem * $item->qty);
@@ -291,6 +289,54 @@ class CheckoutService
             $cart = collect(Session::get('cart', []));
             $remainingCart = $cart->whereNotIn('uniqueId', $selectedIds);
             Session::put('cart', $remainingCart->values()->all());
+        }
+    }
+
+    protected function calculateCouponDiscount(Coupon $coupon, float $subtotal): float
+    {
+        if ($coupon->type === 'percentage') {
+            return round($subtotal * ((float) $coupon->value / 100), 2);
+        }
+
+        return min((float) $coupon->value, $subtotal);
+    }
+
+    protected function lockInventoryForItems($cartItems): void
+    {
+        $productIds = $cartItems->pluck('product_id')->filter()->unique()->values();
+        $variantIds = $cartItems->pluck('variant_id')->filter()->unique()->values();
+
+        $products = Product::whereIn('id', $productIds)->lockForUpdate()->get()->keyBy('id');
+        $variants = ProductVariant::with(['color', 'size'])
+            ->whereIn('id', $variantIds)
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
+
+        foreach ($cartItems as $item) {
+            $product = $products->get($item->product_id);
+            if (!$product || $product->status !== 'active') {
+                throw new Exception('One or more selected products are no longer available.');
+            }
+
+            if (method_exists($item, 'setRelation')) {
+                $item->setRelation('product', $product);
+            } else {
+                $item->product = $product;
+            }
+
+            if ($item->variant_id) {
+                $variant = $variants->get($item->variant_id);
+                if (!$variant || (int) $variant->product_id !== (int) $product->id || $variant->status !== 'active') {
+                    throw new Exception("The selected variant for \"{$product->title}\" is no longer available.");
+                }
+
+                if (method_exists($item, 'setRelation')) {
+                    $item->setRelation('variant', $variant);
+                } else {
+                    $item->variant = $variant;
+                }
+            }
         }
     }
 }

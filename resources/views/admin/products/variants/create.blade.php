@@ -60,6 +60,15 @@
                                 required>
                         </div>
 
+                        <!-- Discount Price -->
+                        <div>
+                            <label for="discount_price_0" class="block text-sm font-medium text-gray-700 mb-1">Discount
+                                Price (৳)</label>
+                            <input type="number" step="0.01" min="0" id="discount_price_0"
+                                name="variants[0][discount_price]" value="{{ old('variants.0.discount_price') }}"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-black focus:border-black">
+                        </div>
+
                         <!-- Stock Quantity -->
                         <div>
                             <label for="stock_quantity_0" class="block text-sm font-medium text-gray-700 mb-1">Stock
@@ -177,6 +186,12 @@
                 <div>
                     <label for="price_${newIndex}" class="block text-sm font-medium text-gray-700 mb-1">Price (৳) <span class="text-red-500">*</span></label>
                     <input type="number" step="0.01" min="0" id="price_${newIndex}" name="variants[${newIndex}][price]" value="{{ $product->price }}" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-black focus:border-black" required>
+                </div>
+
+                <!-- Discount Price -->
+                <div>
+                    <label for="discount_price_${newIndex}" class="block text-sm font-medium text-gray-700 mb-1">Discount Price (৳)</label>
+                    <input type="number" step="0.01" min="0" id="discount_price_${newIndex}" name="variants[${newIndex}][discount_price]" value="" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-black focus:border-black">
                 </div>
 
                 <!-- Stock Quantity -->

@@ -36,4 +36,9 @@ class Coupon extends Model
                     ->orWhereColumn('used_count', '<', 'usage_limit');
             });
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }

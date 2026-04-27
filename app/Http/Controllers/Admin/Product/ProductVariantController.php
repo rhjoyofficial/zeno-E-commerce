@@ -85,6 +85,7 @@ class ProductVariantController extends Controller
             'color_id' => 'required|exists:colors,id',
             'size_id' => 'required|exists:product_sizes,id',
             'price' => 'required|numeric|min:0',
+            'discount_price' => 'nullable|numeric|min:0|lt:price',
             'stock_quantity' => 'required|integer|min:0',
             'stock_alert' => 'nullable|integer|min:0',
             'sku' => 'required|string|unique:product_variants,sku,' . $variant->id,
@@ -130,9 +131,7 @@ class ProductVariantController extends Controller
         ]);
 
         $sku = $request->input('sku');
-        $isAvailable = !ProductVariant::where('product_id', $product->id)
-            ->where('sku', $sku)
-            ->exists();
+        $isAvailable = !ProductVariant::where('sku', $sku)->exists();
 
         return response()->json([
             'isAvailable' => $isAvailable,

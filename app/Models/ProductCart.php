@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
 
 class ProductCart extends Model
 {
@@ -17,6 +16,7 @@ class ProductCart extends Model
         'size',
         'qty',
         'price',
+        'cart_key',
         // 'created_by',
         // 'updated_by',
     ];
@@ -45,14 +45,15 @@ class ProductCart extends Model
         return $this->belongsTo(ProductVariant::class, 'variant_id')->where('status', 'active');
     }
 
-    // protected static function booted()
-    // {
-    //     static::creating(function ($cart) {
-    //         $cart->created_by = Auth::id() ?? null;
-    //         $cart->updated_by = Auth::id() ?? null;
-    //     });
-    //     static::updating(function ($cart) {
-    //         $cart->updated_by = Auth::id() ?? null;
-    //     });
-    // }
+    protected static function booted()
+    {
+        static::saving(function ($cart) {
+            $cart->cart_key = implode(':', [
+                $cart->user_id,
+                $cart->product_id,
+                $cart->variant_id ?: 'base',
+            ]);
+        });
+    }
+
 }

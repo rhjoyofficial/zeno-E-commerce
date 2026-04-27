@@ -17,6 +17,12 @@ return new class extends Migration
             $table->foreignId('division_id')->constrained('divisions')->onDelete('cascade');
             $table->timestamps();
         });
+
+        Schema::table('customer_profiles', function (Blueprint $table) {
+            $table->foreignId('country_id')->nullable()->after('cus_country')->constrained('countries')->nullOnDelete();
+            $table->foreignId('division_id')->nullable()->after('country_id')->constrained('divisions')->nullOnDelete();
+            $table->foreignId('district_id')->nullable()->after('division_id')->constrained('districts')->nullOnDelete();
+        });
         
     }
 
@@ -25,6 +31,13 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('customer_profiles', function (Blueprint $table) {
+            $table->dropForeign(['country_id']);
+            $table->dropForeign(['division_id']);
+            $table->dropForeign(['district_id']);
+            $table->dropColumn(['country_id', 'division_id', 'district_id']);
+        });
+
         Schema::dropIfExists('districts');
     }
 };

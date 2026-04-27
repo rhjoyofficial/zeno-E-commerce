@@ -46,6 +46,11 @@ class Category extends Model
         return $query->whereNull('parent_id');
     }
 
+    public function getCategoryNameAttribute()
+    {
+        return $this->category_name;
+    }
+
     public function getDescendantIds()
     {
         $ids = [$this->id];

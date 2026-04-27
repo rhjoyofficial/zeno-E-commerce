@@ -26,6 +26,7 @@ class StoreProductVariantsRequest extends FormRequest
             'variants.*.color_id' => 'required|exists:colors,id',
             'variants.*.size_id' => 'required|exists:product_sizes,id',
             'variants.*.price' => 'required|numeric|min:0',
+            'variants.*.discount_price' => 'nullable|numeric|min:0',
             'variants.*.stock_quantity' => 'required|integer|min:0',
             'variants.*.stock_alert' => 'nullable|integer|min:0',
             'variants.*.sku' => 'required|string|unique:product_variants,sku',

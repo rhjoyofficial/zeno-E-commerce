@@ -18,8 +18,9 @@ return new class extends Migration
 
             $table->string('color', 200)->nullable();
             $table->string('size', 200)->nullable();
-            $table->string('qty', 200);
+            $table->unsignedInteger('qty')->default(1);
             $table->decimal('price', 10, 2);
+            $table->string('cart_key')->unique();
 
             $table->foreign('product_id')->references('id')->on('products')
                 ->restrictOnDelete()

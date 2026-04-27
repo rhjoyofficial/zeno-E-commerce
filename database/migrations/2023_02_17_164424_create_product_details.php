@@ -28,6 +28,7 @@ return new class extends Migration
             $table->unsignedInteger('stock_alert')->nullable();
             $table->unsignedInteger('stock_quantity')->default(0);
             $table->decimal('price', 10, 2)->default(0);
+            $table->decimal('discount_price', 10, 2)->nullable();
             $table->string('sku', 100)->nullable()->unique();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->foreign('product_id')->references('id')->on('products')->cascadeOnDelete();
@@ -46,13 +47,13 @@ return new class extends Migration
             $table->unsignedBigInteger('variant_id')->nullable();
             $table->string('image_path', 255);
             $table->boolean('is_primary')->default(false);
+            $table->string('primary_scope_key')->nullable()->unique();
             $table->foreign('product_id')->references('id')->on('products')->cascadeOnDelete();
             $table->foreign('variant_id')->references('id')->on('product_variants')->nullOnDelete();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->index('product_id');
             $table->index('variant_id');
-            $table->unique(['product_id', 'variant_id', 'is_primary']);
             $table->timestamps();
         });
     }

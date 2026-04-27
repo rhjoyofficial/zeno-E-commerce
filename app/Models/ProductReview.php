@@ -16,6 +16,7 @@ class ProductReview extends Model
     ];
     protected $casts = [
         'status' => 'string',
+        'rating' => 'integer',
     ];
     public function product()
     {

@@ -11,6 +11,7 @@ class ProductWish extends Model
     protected $fillable = [
         'product_id',
         'user_id',
+        'wish_key',
         // 'variant_id', // Optional: Add if schema updated
     ];
     public function product()
@@ -26,4 +27,11 @@ class ProductWish extends Model
     // {
     //     return $this->belongsTo(ProductVariant::class, 'variant_id');
     // }
+
+    protected static function booted()
+    {
+        static::saving(function ($wish) {
+            $wish->wish_key = $wish->user_id . ':' . $wish->product_id;
+        });
+    }
 }

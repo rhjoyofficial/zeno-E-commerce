@@ -23,6 +23,11 @@ class CartService
 
         if (!empty($data['variant_id'])) {
             $variant = ProductVariant::findOrFail($data['variant_id']);
+
+            if ((int) $variant->product_id !== (int) $product->id || $variant->status !== 'active') {
+                return ['success' => false, 'message' => 'The selected product variant is not available.'];
+            }
+
             $price = $variant->price;
             $size_id = $variant->size_id;
             $color_id = $variant->color_id;

@@ -23,6 +23,11 @@ class HomeSectionItem extends Model
 
     public function section()
     {
-        return $this->belongsTo(HomeSection::class);
+        return $this->belongsTo(HomeSection::class, 'home_section_id');
+    }
+
+    public function homeSection()
+    {
+        return $this->belongsTo(HomeSection::class, 'home_section_id');
     }
 }

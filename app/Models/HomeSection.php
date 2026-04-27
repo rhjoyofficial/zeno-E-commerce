@@ -36,14 +36,10 @@ class HomeSection extends Model
     // In HomeSection model
     public function products()
     {
-        return $this->hasManyThrough(
-            Product::class,
-            Category::class,
-            'id',
-            'category_id',
-            'category_id',
-            'id'
-        );
+        return Product::query()
+            ->when($this->category, function ($query) {
+                $query->whereIn('category_id', $this->category->getDescendantIds());
+            });
     }
 
     // Scope for new arrivals
@@ -88,8 +84,8 @@ class HomeSection extends Model
                 'discountPrice' => $product->discount_price ?: null,
                 'badge'         => $product->discount ? 'Sale' : 'New',
                 'stock'         => $product->stock_quantity > 0,
-                'categories'    => $product->category ? [$product->category->categoryName] : [],
-                'tags'          => $product->tags->pluck('tag')->toArray(),
+                'categories'    => $product->category ? [$product->category->category_name] : [],
+                'tags'          => $product->tags->pluck('name')->toArray(),
                 'avg_rating'    => $product->avg_rating,
                 'slug'          => $product->slug,
             ];

@@ -14,6 +14,7 @@ class ProductVariant extends Model
         'color_id',
         'size_id',
         'price',
+        'discount_price',
         'stock_quantity',
         'stock_alert',
         'sku',
@@ -24,6 +25,7 @@ class ProductVariant extends Model
     protected $casts = [
         'status' => 'string',
         'price' => 'decimal:2',
+        'discount_price' => 'decimal:2',
         'stock_quantity' => 'integer',
         'stock_alert' => 'integer',
     ];
@@ -37,11 +39,11 @@ class ProductVariant extends Model
     }
     public function size()
     {
-        return $this->belongsTo(ProductSize::class);
+        return $this->belongsTo(ProductSize::class, 'size_id');
     }
     public function images()
     {
-        return $this->hasMany(ProductImage::class);
+        return $this->hasMany(ProductImage::class, 'variant_id');
     }
     public function orderItems()
     {
@@ -52,9 +54,9 @@ class ProductVariant extends Model
         return $query->where('status', 'active');
     }
 
-    public function getHasVariantsAttribute()
+    public function getFinalPriceAttribute()
     {
-        return $this->variants()->exists();
+        return $this->discount_price ?: $this->price;
     }
     protected static function booted()
     {

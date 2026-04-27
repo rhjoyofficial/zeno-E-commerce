@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('price', 10, 2)->default(0);
             $table->boolean('discount')->default(false);
             $table->decimal('discount_price', 10, 2)->nullable();
+            $table->boolean('is_new_arrival')->default(false)->index();
             $table->unsignedInteger('stock_alert')->nullable();
             $table->unsignedInteger('stock_quantity')->default(0);
             $table->string('slug')->unique();

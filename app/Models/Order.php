@@ -19,6 +19,8 @@ class Order extends Model
         'tax_amount',
         'shipping_amount',
         'total',
+        'coupon_id',
+        'coupon_code',
         'total_paid',
         'total_refunded',
         'currency',
@@ -78,6 +80,10 @@ class Order extends Model
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
     }
     public function scopeByUser($query, $userId)
     {

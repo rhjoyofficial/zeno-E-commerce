@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('product_reviews', function (Blueprint $table) {
             $table->id();
             $table->string('description', 1000);
-            $table->string('rating', 10);
+            $table->unsignedTinyInteger('rating');
             $table->unsignedBigInteger('customer_id');
             $table->unsignedBigInteger('product_id');
             $table->foreign('customer_id')->references('id')->on('customer_profiles')->restrictOnDelete()->restrictOnUpdate();

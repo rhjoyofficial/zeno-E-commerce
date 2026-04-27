@@ -17,6 +17,9 @@ class CustomerProfile extends Model
         'cus_country',
         'cus_phone',
         'cus_fax',
+        'country_id',
+        'division_id',
+        'district_id',
         'user_id',
         'entry_user_id',
     ];
@@ -30,14 +33,14 @@ class CustomerProfile extends Model
     }
     public function country()
     {
-        return $this->belongsTo(Country::class);
+        return $this->belongsTo(Country::class, 'country_id');
     }
     public function division()
     {
-        return $this->belongsTo(Division::class);
+        return $this->belongsTo(Division::class, 'division_id');
     }
     public function district()
     {
-        return $this->belongsTo(District::class);
+        return $this->belongsTo(District::class, 'district_id');
     }
 }

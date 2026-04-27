@@ -37,6 +37,11 @@ return new class extends Migration
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
+
+        Schema::table('orders', function (Blueprint $table) {
+            $table->foreignId('coupon_id')->nullable()->after('total')->constrained('coupons')->nullOnDelete();
+            $table->string('coupon_code', 50)->nullable()->after('coupon_id')->index();
+        });
         
     }
 
@@ -45,6 +50,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('offers');
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropForeign(['coupon_id']);
+            $table->dropIndex(['coupon_code']);
+            $table->dropColumn(['coupon_id', 'coupon_code']);
+        });
+
+        Schema::dropIfExists('tax_rates');
+        Schema::dropIfExists('coupons');
     }
 };
