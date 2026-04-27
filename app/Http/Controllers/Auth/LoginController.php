@@ -35,10 +35,8 @@ class LoginController extends Controller
                 }
 
                 if (Auth::check() && Session::has('cart')) {
-                    // Get the cart controller instance
-                    $cartController = app()->make('App\Http\Controllers\Customer\CartController');
-                    // Sync the cart
-                    $cartController->syncCart();
+                    $cartService = app()->make(\App\Services\CartService::class);
+                    $cartService->syncCart();
                 }
 
                 return redirect()

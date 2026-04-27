@@ -36,7 +36,6 @@ class Product extends Model
         'stock_alert' => 'integer',
         'has_variants' => 'boolean',
     ];
-    protected $with = ['primaryImage', 'category', 'brand'];
 
     public function category()
     {
