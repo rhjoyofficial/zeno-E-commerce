@@ -2,7 +2,7 @@
 @section('title', 'Category Management')
 @section('content')
 
-<div class="container mx-auto px-4 py-8" x-data="categoryManagement()">
+<div class="container mx-auto px-4 py-8">
 
     <div class="bg-white border border-gray-200">
         <!-- Header Section -->
@@ -12,7 +12,7 @@
                     <h1 class="text-2xl font-semibold text-gray-900">Category Management</h1>
                     <p class="text-gray-600 mt-1">Manage your product categories</p>
                 </div>
-                <button @click="showCreateModal = true"
+                <button id="category-open-create"
                     class="px-5 py-2.5 bg-gray-900 text-white hover:bg-gray-800 transition-colors text-sm font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -29,16 +29,11 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr class="border-b border-gray-200">
-                        <th class="w-1/4 px-6 py-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Logo
-                        </th>
-                        <th class="w-1/4 px-6 py-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Name
-                        </th>
-                        <th class="w-1/4 px-6 py-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                            Parent</th>
-                        <th class="w-1/4 px-6 py-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                            Status</th>
-                        <th class="w-1/4 px-6 py-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                            Actions</th>
+                        <th class="w-1/4 px-6 py-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Logo</th>
+                        <th class="w-1/4 px-6 py-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                        <th class="w-1/4 px-6 py-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Parent</th>
+                        <th class="w-1/4 px-6 py-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                        <th class="w-1/4 px-6 py-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -60,20 +55,16 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <select
                                 class="px-5 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-300 border border-gray-300
-                                            {{ $category->status == 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-700' }}"
+                                    {{ $category->status == 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-700' }}"
                                 onchange="updateStatus(this.value, {{ $category->id }})">
-                                <option value="active" {{ $category->status == 'active' ? 'selected' : '' }}>
-                                    Active
-                                </option>
-                                <option value="inactive" {{ $category->status == 'inactive' ? 'selected' : '' }}>
-                                    Inactive
-                                </option>
+                                <option value="active" {{ $category->status == 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="inactive" {{ $category->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
                             </select>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex space-x-2">
                                 <button
-                                    @click="openEditModal({{ $category->id }}, '{{ addslashes($category->category_name) }}', '{{ asset('storage/' . $category->category_image) }}', {{ $category->parent_id ?? 'null' }}, '{{ $category->status }}')"
+                                    onclick="openCategoryEditModal({{ $category->id }}, '{{ addslashes($category->category_name) }}', '{{ asset('storage/' . $category->category_image) }}', {{ $category->parent_id ?? 'null' }}, '{{ $category->status }}')"
                                     class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
@@ -115,126 +106,126 @@
 </div>
 
 <script>
-    const categoryStoreURL = @json(route('admin.categories.store'));
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('categoryManagement', () => ({
-                showCreateModal: false,
-                showEditModal: false,
-                isSubmitting: false,
-                errorMessage: '',
-                categoryForm: {
-                    name: '',
-                    logo: null,
-                    parent_id: '',
-                    status: 'active'
-                },
-                editForm: {
-                    id: null,
-                    name: '',
-                    currentLogo: '',
-                    newLogo: null,
-                    parent_id: null,
-                    status: 'active'
-                },
+const categoryStoreURL = @json(route('admin.categories.store'));
 
-                openEditModal(id, name, logo, parentId, status) {
-                    console.log('Opening edit modal for ID:', id, name, logo, parentId, status);
-                    this.editForm = {
-                        id,
-                        name,
-                        currentLogo: logo,
-                        newLogo: null,
-                        parent_id: parentId,
-                        status
-                    };
-                    this.showEditModal = true;
-                },
+(function () {
+    const createModal = document.getElementById('category-create-modal');
+    const editModal   = document.getElementById('category-edit-modal');
+    const $ = (id) => document.getElementById(id);
 
-                async submitCategoryForm() {
-                    this.isSubmitting = true;
-                    this.errorMessage = '';
+    $('category-open-create').addEventListener('click', () => createModal.classList.remove('hidden'));
+    $('category-create-close').addEventListener('click', () => createModal.classList.add('hidden'));
+    $('category-create-cancel').addEventListener('click', () => createModal.classList.add('hidden'));
 
-                    try {
-                        const formData = new FormData();
-                        formData.append('category_name', this.categoryForm.name);
-                        formData.append('category_image', this.categoryForm.logo);
-                        formData.append('parent_id', this.categoryForm.parent_id || '');
-                        formData.append('status', this.categoryForm.status);
+    $('category-edit-close').addEventListener('click', () => editModal.classList.add('hidden'));
+    $('category-edit-cancel').addEventListener('click', () => editModal.classList.add('hidden'));
 
-                        await axios.post(categoryStoreURL, formData, {
-                            headers: {
-                                'Content-Type': 'multipart/form-data'
-                            }
-                        });
-                        window.location.reload();
-                    } catch (error) {
-                        this.handleError(error, 'Error creating category');
-                    } finally {
-                        this.isSubmitting = false;
-                    }
-                },
-                async submitEditForm() {
-                    this.isSubmitting = true;
-                    this.errorMessage = '';
+    [createModal, editModal].forEach(modal => {
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+    });
 
-                    try {
-                        const formData = new FormData();
-                        formData.append('_method', 'PUT');
-                        formData.append('category_name', this.editForm.name);
-                        formData.append('parent_id', this.editForm.parent_id || '');
-                        formData.append('status', this.editForm.status);
-                        if (this.editForm.newLogo) formData.append('category_image', this.editForm
-                            .newLogo);
+    $('category-create-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = $('category-create-submit');
+        const errorEl  = $('category-create-error');
 
-                        await axios.post(`/admin/categories/${this.editForm.id}`, formData);
-                        window.location.reload();
-                    } catch (error) {
-                        this.handleError(error, 'Error updating category');
-                    } finally {
-                        this.isSubmitting = false;
-                    }
-                },
+        submitBtn.disabled = true;
+        $('category-create-idle').classList.add('hidden');
+        $('category-create-busy').classList.remove('hidden');
+        errorEl.classList.add('hidden');
 
-                handleError(error, defaultMessage) {
-                    let errorMessage = defaultMessage;
+        try {
+            const formData = new FormData();
+            formData.append('category_name', $('category-create-name').value);
+            formData.append('category_image', $('category-create-logo').files[0]);
+            formData.append('parent_id', $('category-create-parent').value || '');
+            formData.append('status', $('category-create-status').value);
 
-                    if (error.response) {
-                        if (error.response.data && error.response.data.message) {
-                            errorMessage = error.response.data.message;
-                        } else if (error.response.status === 422) {
-                            errorMessage = 'Validation error: ' +
-                                Object.values(error.response.data.errors).flat().join(', ');
-                        }
-                    } else if (error.request) {
-                        errorMessage = 'No response received from server';
-                    }
+            const res = await fetch(categoryStoreURL, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                body: formData
+            });
 
-                    this.errorMessage = errorMessage;
-                }
-            }));
-        });
-
-        function updateStatus(newStatus, categoryId) {
-            fetch(`/admin/categories/${categoryId}/update-status`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        status: newStatus
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.success) {
-                        alert('Failed to update status.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Something went wrong.');
-                });
+            if (!res.ok) throw new Error((await res.json()).message || 'Failed to create category');
+            window.location.reload();
+        } catch (err) {
+            errorEl.textContent = err.message;
+            errorEl.classList.remove('hidden');
+            submitBtn.disabled = false;
+            $('category-create-idle').classList.remove('hidden');
+            $('category-create-busy').classList.add('hidden');
         }
+    });
+
+    $('category-edit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = $('category-edit-submit');
+        const errorEl  = $('category-edit-error');
+        const id       = $('category-edit-id').value;
+
+        submitBtn.disabled = true;
+        $('category-edit-idle').classList.add('hidden');
+        $('category-edit-busy').classList.remove('hidden');
+        errorEl.classList.add('hidden');
+
+        try {
+            const formData = new FormData();
+            formData.append('_method', 'PUT');
+            formData.append('category_name', $('category-edit-name').value);
+            formData.append('parent_id', $('category-edit-parent').value || '');
+            formData.append('status', $('category-edit-status').value);
+            const logoFile = $('category-edit-logo').files[0];
+            if (logoFile) formData.append('category_image', logoFile);
+
+            const res = await fetch(`/admin/categories/${id}`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                body: formData
+            });
+
+            if (!res.ok) throw new Error((await res.json()).message || 'Failed to update category');
+            window.location.reload();
+        } catch (err) {
+            errorEl.textContent = err.message;
+            errorEl.classList.remove('hidden');
+            submitBtn.disabled = false;
+            $('category-edit-idle').classList.remove('hidden');
+            $('category-edit-busy').classList.add('hidden');
+        }
+    });
+})();
+
+function openCategoryEditModal(id, name, logo, parentId, status) {
+    document.getElementById('category-edit-id').value = id;
+    document.getElementById('category-edit-name').value = name;
+    document.getElementById('category-edit-logo-preview').src = logo;
+    document.getElementById('category-edit-logo').value = '';
+    document.getElementById('category-edit-error').classList.add('hidden');
+
+    const parentSelect = document.getElementById('category-edit-parent');
+    parentSelect.value = parentId !== null ? parentId : '';
+
+    const statusSelect = document.getElementById('category-edit-status');
+    statusSelect.value = status;
+
+    document.getElementById('category-edit-modal').classList.remove('hidden');
+}
+
+function updateStatus(newStatus, categoryId) {
+    fetch(`/admin/categories/${categoryId}/update-status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) alert('Failed to update status.');
+    })
+    .catch(() => alert('Something went wrong.'));
+}
 </script>
 @endsection

@@ -9,9 +9,6 @@
     <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}" sizes="32x32" />
     <link rel="apple-touch-icon" href="{{ asset('images/favicon.png') }}" sizes="180x180" />
 
-    {{-- Font Awesome --}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,7 +41,6 @@
 
     <div id="notification-container" class="fixed top-20 right-4 z-[9999] space-y-3 w-80 max-w-[90vw]"></div>
 
-    <script src="{{ asset('js/preloader.js') }}"></script>
     <script src="{{ asset('js/helper.js') }}"></script>
 
     {{-- Global app config for JS --}}
@@ -54,12 +50,12 @@
                 productVariants:  "{{ route('products.variants') }}",
                 cartAdd:          "{{ route('cart.add') }}",
                 getVariantPrice:  "{{ route('cart.get-variant-price') }}",
+                home:             "{{ route('home') }}",
             },
             csrfToken: "{{ csrf_token() }}",
         };
     </script>
 
-    <script src="{{ asset('js/product-popup.js') }}"></script>
 
     @stack('scripts')
 </body>

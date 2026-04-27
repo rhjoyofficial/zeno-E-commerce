@@ -315,33 +315,34 @@
                 </div>
 
                 <!-- Form Actions -->
-                <div class="pt-8" x-data="{ showConfirmation: false, formChanged: false }">
+                <div class="pt-8">
                     <div class="flex justify-end space-x-3">
-                        <button type="button" id="cancelBtn"
-                            @click="if(formChanged) { showConfirmation = true } else { window.location.href = '{{ route('admin.products.index') }}' }"
+                        <a href="{{ route('admin.products.index') }}"
                             class="border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                             Cancel
-                        </button>
-                        <button type="button" id="submitBtn" @click="showConfirmation = true"
+                        </a>
+                        <button type="button" id="create-product-submit-btn"
+                            onclick="document.getElementById('create-product-confirm-modal').classList.remove('hidden')"
                             class="inline-flex justify-center border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                             Save Product
                         </button>
                     </div>
 
                     <!-- Confirmation Modal -->
-                    <div x-show="showConfirmation" x-cloak x-transition
-                        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div id="create-product-confirm-modal"
+                        class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div class="bg-white p-6 max-w-md w-full">
                             <h3 class="text-lg font-medium text-gray-900 mb-4">Confirm Submission</h3>
                             <p class="text-sm text-gray-500 mb-6">Are you sure you want to submit this product? These
                                 changes will be visible to customers immediately.</p>
                             <div class="flex justify-end space-x-3">
-                                <button type="button" @click="showConfirmation = false"
-                                    class="px-4 py-2 border border-gray-300  text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <button type="button"
+                                    onclick="document.getElementById('create-product-confirm-modal').classList.add('hidden')"
+                                    class="px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     Cancel
                                 </button>
                                 <button type="submit"
-                                    class="px-4 py-2 bg-indigo-600 border border-transparent  text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    class="px-4 py-2 bg-indigo-600 border border-transparent text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     Confirm
                                 </button>
                             </div>
@@ -840,9 +841,6 @@
         display: none;
     }
 
-    [x-cloak] {
-        display: none !important;
-    }
 
     .image-field {
         transition: all 0.3s ease;

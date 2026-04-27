@@ -16,7 +16,7 @@
                     </div>
 
                     <div class="px-6 py-6">
-                        <div class="space-y-2" x-data>
+                        <div class="space-y-2">
                             @foreach ($cartItems as $cartItem)
                                 @if ($cartItem->product)
                                     @php
@@ -172,35 +172,30 @@
                                 <span class="font-semibold" id="vat-amount">$0.00</span>
                             </div>
 
-                            <div class="flex justify-between items-center" x-data="{
-                                showCouponField: false,
-                                couponCode: '',
-                                applyCoupon() {
-                                    alert(`Applying coupon: ${this.couponCode}`);
-                                }
-                            }">
+                            <div class="flex justify-between items-center">
                                 <span>Coupon discount</span>
-                                <template x-if="!showCouponField">
-                                    <button @click="showCouponField = true"
+                                <div id="cart-coupon-apply-wrapper">
+                                    <button type="button"
+                                        onclick="document.getElementById('cart-coupon-apply-wrapper').classList.add('hidden'); document.getElementById('cart-coupon-field').classList.remove('hidden')"
                                         class="text-sm font-semibold underline hover:no-underline">
                                         Apply coupon
                                     </button>
-                                </template>
-                                <template x-if="showCouponField">
-                                    <div class="flex gap-2 items-center">
-                                        <input type="text" placeholder="Enter code" x-model="couponCode"
-                                            class="text-sm p-2 border border-black focus:outline-none focus:border-black w-32 uppercase"
-                                            maxlength="7">
-                                        <button @click="applyCoupon()"
-                                            class="text-sm font-semibold underline hover:no-underline">
-                                            Apply
-                                        </button>
-                                        <button @click="showCouponField = false; couponCode = ''"
-                                            class="text-sm font-semibold px-2 hover:bg-gray-100">
-                                            ✕
-                                        </button>
-                                    </div>
-                                </template>
+                                </div>
+                                <div id="cart-coupon-field" class="hidden flex gap-2 items-center">
+                                    <input type="text" id="cart-coupon-input" placeholder="Enter code"
+                                        class="text-sm p-2 border border-black focus:outline-none focus:border-black w-32 uppercase"
+                                        maxlength="7">
+                                    <button type="button"
+                                        onclick="alert('Applying coupon: ' + document.getElementById('cart-coupon-input').value)"
+                                        class="text-sm font-semibold underline hover:no-underline">
+                                        Apply
+                                    </button>
+                                    <button type="button"
+                                        onclick="document.getElementById('cart-coupon-field').classList.add('hidden'); document.getElementById('cart-coupon-apply-wrapper').classList.remove('hidden'); document.getElementById('cart-coupon-input').value = ''"
+                                        class="text-sm font-semibold px-2 hover:bg-gray-100">
+                                        ✕
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="flex justify-between">
@@ -240,193 +235,3 @@
     </div>
 @endsection
 
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const checkoutForm = document.getElementById('checkoutForm');
-            const selectedItemsInput = document.getElementById('selectedItemsInput');
-            const cartContainer = document.getElementById('cart-container');
-
-            // Find all order summary elements
-            const orderValueTotalEl = document.getElementById('order-value-total');
-            const totalDiscountEl = document.getElementById('total-discount');
-            const parentDiscount = document.querySelector('.parentDiscount');
-            const vatAmountEl = document.getElementById('vat-amount');
-            const totalPriceEl = document.getElementById('total-price');
-
-            /**
-             * Calculates and updates all order summary totals.
-             * This function is the single source of truth for the cart's financial display.
-             */
-            function updateCartTotals() {
-                let orderValue = 0;
-                let totalDiscount = 0;
-                const vatRate = 0.05;
-                let checkedItemsCount = 0;
-
-                // Iterate over all cart items to calculate totals for checked items
-                document.querySelectorAll(".cart-item-row").forEach(row => {
-                    const checkbox = row.querySelector(".item-checkbox");
-                    if (checkbox && checkbox.checked) {
-                        checkedItemsCount++;
-                        const price = parseFloat(row.dataset.price);
-                        const discount = parseFloat(row.dataset.discount);
-                        const qty = parseInt(row.querySelector(".product-qty-selector").value);
-
-                        orderValue += price * qty;
-                        totalDiscount += discount * qty;
-                    }
-                });
-
-                // Calculate VAT and final total
-                let vat = orderValue * vatRate;
-                let total = orderValue + vat;
-
-                // Update the HTML elements with new values
-                orderValueTotalEl.textContent =
-                    `$${orderValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                if (totalDiscount > 0) {
-                    totalDiscountEl.textContent =
-                        `- $${totalDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    parentDiscount.classList.remove('hidden');
-                } else {
-                    if (!parentDiscount.classList.contains('hidden')) {
-                        parentDiscount.classList.add('hidden');
-                    }
-                }
-                vatAmountEl.textContent =
-                    `$${vat.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                totalPriceEl.textContent =
-                    `$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            }
-
-            // ==================== Event Handlers ====================
-            // Listen for changes to checkboxes to trigger recalculation
-            const checkboxes = document.querySelectorAll('.item-checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', updateCartTotals);
-            });
-
-            // Handle changes to checkboxes and quantity selectors
-            const qtySelectors = document.querySelectorAll('.product-qty-selector');
-
-            qtySelectors.forEach(selector => {
-                selector.addEventListener('change', function() {
-                    const cartItemId = this.getAttribute('data-cart-item-id');
-                    const newQty = this.value;
-                    // Call the function to update the cart
-                    updateCartItem(cartItemId, newQty);
-                });
-            });
-
-            // Handle item removal
-            const removeButtons = document.querySelectorAll('.remove-item');
-            removeButtons.forEach(button => {
-                button.addEventListener('click', function(event) {
-                    const itemId = this.getAttribute('data-item-id');
-                    if (itemId) {
-                        removeCartItem(itemId, this);
-                    }
-                });
-            });
-
-            // Handle form submission to pass only checked items
-            if (checkoutForm) {
-                checkoutForm.addEventListener('submit', function(e) {
-                    let selectedIds = [];
-                    document.querySelectorAll('.cart-item-row .item-checkbox:checked').forEach(checkbox => {
-                        const row = checkbox.closest('.cart-item-row');
-                        selectedIds.push(row.dataset.itemId);
-                    });
-                    selectedItemsInput.value = JSON.stringify(selectedIds);
-                });
-            }
-
-            // ==================== AJAX Functions ====================
-
-            function removeCartItem(itemId) {
-                fetch(`/cart/remove/${itemId}`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        }
-                    })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            const cartItemRow = document.querySelector(
-                                `.cart-item-row[data-item-id="${itemId}"]`);
-                            if (cartItemRow) {
-                                cartItemRow.remove();
-                                updateCartTotals();
-                            }
-                            // Update the main cart counter
-                            document.querySelectorAll(".cart-counter").forEach((el) => {
-                                el.textContent = data.cart_count;
-                            });
-                            if (data.cart_count === 0) {
-                                cartContainer.innerHTML = `<div class="flex-1 text-center py-12">
-                                    <h2 class="text-3xl font-bold py-4">Your bag is empty</h2>
-                                    <a href="{{ route('home') }}" class="bg-black text-lg text-white px-6 py-3 mt-4 inline-block">Continue Shopping</a>
-                                </div>`;
-                            }
-                            const hr = document.querySelector(`hr[data-hr-id="${itemId}"]`);
-                            if (hr) {
-                                hr.remove();
-                            }
-                        } else {
-                            notifications.error(data.message || 'Failed to remove item.');
-                        }
-                    })
-                    .catch(error => {
-                        notifications.error('An error occurred while removing the item.');
-                    });
-            }
-
-            function updateCartItem(itemId, newQty) {
-                fetch(`/cart/update/${itemId}`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            qty: newQty
-                        })
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            document.querySelectorAll(".cart-counter").forEach((el) => {
-                                el.textContent = data.cart_count;
-                            });
-                            document.querySelector('.itemInBag').textContent =
-                                `(${data.cart_count} ${data.cart_count <= 1 ? 'item' : 'items'})`;
-                            updateCartTotals();
-                        } else {
-                            notifications.error('Failed to update cart:', data.message);
-                            alert(data.message || 'An error occurred while updating the cart.');
-                        }
-                    })
-                    .catch(error => {
-                        notifications.error('Error:', error);
-                        alert('An error occurred. Please try again.');
-                    });
-            }
-
-            // Initial calculation on page load
-            updateCartTotals();
-        });
-    </script>
-@endpush

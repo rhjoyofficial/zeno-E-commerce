@@ -1,10 +1,11 @@
 @extends('layouts.app')
 @section('title', 'Verify OTP')
 @section('content')
-    <div x-data="{ show: false }" x-init="setTimeout(() => show = true, 100)"
-        class="min-h-screen bg-gradient-to-r from-indigo-50 via-white to-indigo-50 flex items-center justify-center py-12 px-6">
-        <div x-show="show" x-transition:enter="transition ease-out duration-700"
-            x-transition:enter-start="opacity-0 translate-y-10" x-transition:enter-end="opacity-100 translate-y-0"
+    @php $otpExpired = $user->otp_expires_at && now()->gt($user->otp_expires_at); @endphp
+
+    <div class="min-h-screen bg-gradient-to-r from-indigo-50 via-white to-indigo-50 flex items-center justify-center py-12 px-6">
+        <div id="otp-card"
+            style="opacity:0;transform:translateY(40px);transition:opacity 0.7s ease,transform 0.7s ease;"
             class="w-full mx-auto max-w-md bg-white shadow-lg p-8 space-y-6">
 
             {{-- Brand Icon --}}
@@ -20,7 +21,7 @@
                 </div>
             @endif
 
-            @if ($user->otp_expires_at && now()->gt($user->otp_expires_at))
+            @if ($otpExpired)
                 <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
                     <div class="text-yellow-700">
                         <p>Your OTP has expired. Please request a new one.</p>
@@ -39,7 +40,7 @@
                     <input id="otp" name="otp" type="text" inputmode="numeric" pattern="[0-9]{6}" value="{{ old('otp') }}"
                         class="block w-full border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         required autofocus autocomplete="one-time-code"
-                        x-bind:readonly="{{ $user->otp_expires_at && now()->gt($user->otp_expires_at) ? 'true' : 'false' }}">
+                        @if($otpExpired) readonly @endif>
                     @error('otp')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -52,9 +53,9 @@
                 </div>
 
                 <button type="submit" id="verify-btn"
-                    class="w-full flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    x-bind:disabled="{{ $user->otp_expires_at && now()->gt($user->otp_expires_at) ? 'true' : 'false' }}"
-                    x-bind:class="{{ $user->otp_expires_at && now()->gt($user->otp_expires_at) ? '\'bg-gray-400 cursor-not-allowed hover:bg-gray-400\'' : '\'bg-indigo-600 hover:bg-indigo-700\'' }}">
+                    class="w-full flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+                        {{ $otpExpired ? 'bg-gray-400 cursor-not-allowed hover:bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700' }}"
+                    @if($otpExpired) disabled @endif>
                     Verify OTP
                 </button>
             </form>
@@ -70,6 +71,13 @@
             </div>
         </div>
     </div>
+
+    <script>
+    setTimeout(function () {
+        var card = document.getElementById('otp-card');
+        if (card) { card.style.opacity = '1'; card.style.transform = 'translateY(0)'; }
+    }, 100);
+    </script>
 
     @if ($user->otp_expires_at)
         <script>

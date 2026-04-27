@@ -1,10 +1,9 @@
 @props(['title', 'subtitle' => null])
 
-<div x-data="{ show: false }" x-init="setTimeout(() => show = true, 100)"
-    class="min-h-screen bg-gradient-to-r from-indigo-50 via-white to-indigo-50 flex items-center justify-center py-12 px-6">
-    <div x-show="show" x-transition:enter="transition ease-out duration-700"
-        x-transition:enter-start="opacity-0 translate-y-10" x-transition:enter-end="opacity-100 translate-y-0"
-        class="w-full mx-auto max-w-md bg-white -2xl shadow-lg p-8 space-y-6 ">
+<div class="min-h-screen bg-gradient-to-r from-indigo-50 via-white to-indigo-50 flex items-center justify-center py-12 px-6">
+    <div id="auth-form-card"
+        style="opacity:0;transform:translateY(40px);transition:opacity 0.7s ease,transform 0.7s ease;"
+        class="w-full mx-auto max-w-md bg-white -2xl shadow-lg p-8 space-y-6">
 
         {{-- Brand Icon --}}
         <a href="https://zeno.endbrackets.com/" title="Back to Home Page" class="flex justify-center mb-6 p-3">
@@ -29,3 +28,14 @@
     </div>
 
 </div>
+
+<script>
+(function () {
+    var card = document.getElementById('auth-form-card');
+    if (!card) return;
+    setTimeout(function () {
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+    }, 100);
+})();
+</script>

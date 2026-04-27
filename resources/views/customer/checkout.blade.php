@@ -198,51 +198,77 @@
 
 
                     <!-- Coupon Section -->
-                    <div class="flex justify-between items-center" x-data="{
-                            showCouponField: false,
-                            couponCode: '',
-                            applied: false,
-                            applyCoupon() {
-                                if (!this.couponCode.trim()) return;
-                                document.getElementById('coupon_code_input').value = this.couponCode.trim().toUpperCase();
-                                this.applied = true;
-                                this.showCouponField = false;
-                            },
-                            removeCoupon() {
-                                this.couponCode = '';
-                                this.applied = false;
-                                document.getElementById('coupon_code_input').value = '';
-                            }
-                        }">
+                    <div class="flex justify-between items-center">
                         <span>Coupon discount</span>
-                        <template x-if="applied">
-                            <div class="flex gap-2 items-center text-sm">
-                                <span class="font-semibold text-green-700 uppercase" x-text="couponCode"></span>
-                                <button type="button" @click="removeCoupon()" class="text-red-500 hover:text-red-700 text-xs">✕ Remove</button>
-                            </div>
-                        </template>
-                        <template x-if="!applied && !showCouponField">
-                            <button type="button" @click="showCouponField = true"
+                        <div id="checkout-coupon-applied" class="hidden flex gap-2 items-center text-sm">
+                            <span id="checkout-coupon-code-label" class="font-semibold text-green-700 uppercase"></span>
+                            <button type="button" id="checkout-coupon-remove"
+                                class="text-red-500 hover:text-red-700 text-xs">✕ Remove</button>
+                        </div>
+                        <button type="button" id="checkout-coupon-toggle"
+                            class="text-sm font-semibold underline hover:no-underline">
+                            Apply coupon
+                        </button>
+                        <div id="checkout-coupon-field" class="hidden flex gap-2 items-center">
+                            <input type="text" id="checkout-coupon-input" placeholder="Enter code"
+                                class="text-sm p-2 border border-black focus:outline-none focus:border-black w-32 uppercase"
+                                maxlength="50">
+                            <button type="button" id="checkout-coupon-apply"
                                 class="text-sm font-semibold underline hover:no-underline">
-                                Apply coupon
+                                Apply
                             </button>
-                        </template>
-                        <template x-if="!applied && showCouponField">
-                            <div class="flex gap-2 items-center">
-                                <input type="text" placeholder="Enter code" x-model="couponCode"
-                                    class="text-sm p-2 border border-black focus:outline-none focus:border-black w-32 uppercase"
-                                    maxlength="50" @keydown.enter.prevent="applyCoupon()">
-                                <button type="button" @click="applyCoupon()"
-                                    class="text-sm font-semibold underline hover:no-underline">
-                                    Apply
-                                </button>
-                                <button type="button" @click="showCouponField = false; couponCode = ''"
-                                    class="text-sm font-semibold px-2 hover:bg-gray-100">
-                                    ✕
-                                </button>
-                            </div>
-                        </template>
+                            <button type="button" id="checkout-coupon-cancel"
+                                class="text-sm font-semibold px-2 hover:bg-gray-100">
+                                ✕
+                            </button>
+                        </div>
                     </div>
+                    <script>
+                    (function () {
+                        const appliedEl  = document.getElementById('checkout-coupon-applied');
+                        const codeLabel  = document.getElementById('checkout-coupon-code-label');
+                        const toggleBtn  = document.getElementById('checkout-coupon-toggle');
+                        const fieldEl    = document.getElementById('checkout-coupon-field');
+                        const input      = document.getElementById('checkout-coupon-input');
+                        const applyBtn   = document.getElementById('checkout-coupon-apply');
+                        const cancelBtn  = document.getElementById('checkout-coupon-cancel');
+                        const removeBtn  = document.getElementById('checkout-coupon-remove');
+                        const hiddenInput = document.getElementById('coupon_code_input');
+
+                        toggleBtn.addEventListener('click', () => {
+                            toggleBtn.classList.add('hidden');
+                            fieldEl.classList.remove('hidden');
+                            input.focus();
+                        });
+
+                        function applyCoupon() {
+                            const code = input.value.trim().toUpperCase();
+                            if (!code) return;
+                            if (hiddenInput) hiddenInput.value = code;
+                            codeLabel.textContent = code;
+                            fieldEl.classList.add('hidden');
+                            toggleBtn.classList.add('hidden');
+                            appliedEl.classList.remove('hidden');
+                        }
+
+                        applyBtn.addEventListener('click', applyCoupon);
+                        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); } });
+
+                        cancelBtn.addEventListener('click', () => {
+                            input.value = '';
+                            fieldEl.classList.add('hidden');
+                            toggleBtn.classList.remove('hidden');
+                        });
+
+                        removeBtn.addEventListener('click', () => {
+                            input.value = '';
+                            if (hiddenInput) hiddenInput.value = '';
+                            codeLabel.textContent = '';
+                            appliedEl.classList.add('hidden');
+                            toggleBtn.classList.remove('hidden');
+                        });
+                    })();
+                    </script>
 
 
                     <div class="flex justify-between">

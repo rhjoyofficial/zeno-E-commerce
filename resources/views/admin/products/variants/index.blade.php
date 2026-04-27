@@ -47,39 +47,30 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th
-                                        class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                        Color</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                        Size</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                        Price</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                        Stock</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                        SKU</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                        Status</th>
-                                    <th
-                                        class="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions</th>
+                                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Color</th>
+                                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach ($variants as $variant)
+                                    @php
+                                        $alert = $variant->stock_alert ?? 5;
+                                        $stockClass = $variant->stock_quantity <= $alert
+                                            ? 'bg-red-100 text-red-800'
+                                            : 'bg-green-100 text-green-800';
+                                    @endphp
                                     <tr class="hover:bg-gray-50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @if ($variant->color)
                                                 <div class="flex items-center">
                                                     <div class="flex-shrink-0 h-6 w-6 rounded-full border border-gray-300"
                                                         style="background-color: {{ $variant->color->hex_code }}"></div>
-                                                    <div class="ml-2 text-base text-gray-900">{{ $variant->color->name }}
-                                                    </div>
+                                                    <div class="ml-2 text-base text-gray-900">{{ $variant->color->name }}</div>
                                                 </div>
                                             @else
                                                 <span class="text-base text-gray-500">N/A</span>
@@ -91,50 +82,22 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-base text-gray-900">
                                             {{ number_format($variant->price, 2) }}৳
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap" x-data="stockModal({{ $variant->id }}, {{ $variant->stock_quantity }})">
+                                        <td class="px-6 py-4 whitespace-nowrap">
                                             <button type="button" class="w-full text-left focus:outline-none"
-                                                @click="open = true">
+                                                onclick="openVariantStockModal({{ $variant->id }}, {{ $variant->stock_quantity }}, {{ $alert }})">
                                                 <div class="text-base">
-                                                    <span
-                                                        class="px-2 py-1 inline-flex text-sm font-medium rounded-full {{ $variant->stock_quantity <= ($variant->stock_alert ?? 5) ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
+                                                    <span id="variant-stock-badge-{{ $variant->id }}"
+                                                        class="px-2 py-1 inline-flex text-sm font-medium rounded-full {{ $stockClass }}">
                                                         {{ $variant->stock_quantity }}
                                                     </span>
                                                 </div>
                                             </button>
-
-                                            <!-- Modal -->
-                                            <div x-show="open" style="display: none;"
-                                                class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-                                                x-transition>
-                                                <div class="bg-white p-6 w-80" @click.away="open = false">
-                                                    <h2 class="text-lg font-semibold mb-4">Update Stock Quantity</h2>
-                                                    <form @submit.prevent="submit">
-                                                        <input type="number" x-model="newQty"
-                                                            class="w-full px-3 py-2 text-base font-medium border border-gray-300 focus:outline-none focus:ring focus:border-black"
-                                                            min="0" required>
-                                                        <div class="mt-4 flex justify-end space-x-2">
-                                                            <button type="button" @click="open = false"
-                                                                class="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
-                                                                Cancel
-                                                            </button>
-                                                            <button type="submit" class="px-6 py-2 bg-black text-white"
-                                                                :disabled="isSubmitting"
-                                                                :class="isSubmitting ? 'opacity-50 cursor-not-allowed' : ''">
-                                                                <span x-show="isSubmitting"
-                                                                    class="animate-spin mr-1 inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
-                                                                <span x-show="!isSubmitting">Save</span>
-                                                            </button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-base text-gray-900">
                                             {{ $variant->sku ?? 'N/A' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                class="px-2 py-1 inline-flex text-sm font-medium rounded-full {{ $variant->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                            <span class="px-2 py-1 inline-flex text-sm font-medium rounded-full {{ $variant->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
                                                 {{ ucfirst($variant->status) }}
                                             </span>
                                         </td>
@@ -176,41 +139,103 @@
         </div>
     </div>
 
+    <!-- Shared Variant Stock Modal -->
+    <div id="variant-stock-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        role="dialog" aria-modal="true">
+        <div class="bg-white p-6 w-80 max-w-[90vw]">
+            <h2 class="text-lg font-semibold mb-4">Update Stock Quantity</h2>
+            <form id="variant-stock-form">
+                <input id="variant-stock-qty" type="number"
+                    class="w-full px-3 py-2 text-base font-medium border border-gray-300 focus:outline-none focus:ring focus:border-black"
+                    min="0" required>
+                <div class="mt-4 flex justify-end space-x-2">
+                    <button type="button" id="variant-stock-cancel"
+                        class="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" id="variant-stock-submit" class="px-6 py-2 bg-black text-white">
+                        <span id="variant-stock-idle">Save</span>
+                        <span id="variant-stock-busy" class="hidden">
+                            <span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-1"></span>
+                            Saving...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        function stockModal(variantId, initialQty) {
-            return {
-                open: false,
-                newQty: initialQty,
-                isSubmitting: false,
-                submit() {
-                    this.isSubmitting = true;
-                    fetch(`/admin/products/variants/${variantId}/update-stock`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                                    'content')
-                            },
-                            body: JSON.stringify({
-                                stock_quantity: this.newQty
-                            })
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                location.reload();
-                            } else {
-                                alert('Update failed.');
-                                this.isSubmitting = false;
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('Something went wrong.');
-                            this.isSubmitting = false;
-                        });
-                }
-            }
+    (function () {
+        let currentVariantId = null;
+        let currentStockAlert = 5;
+
+        const modal     = document.getElementById('variant-stock-modal');
+        const form      = document.getElementById('variant-stock-form');
+        const qtyInput  = document.getElementById('variant-stock-qty');
+        const cancelBtn = document.getElementById('variant-stock-cancel');
+        const submitBtn = document.getElementById('variant-stock-submit');
+        const idleSpan  = document.getElementById('variant-stock-idle');
+        const busySpan  = document.getElementById('variant-stock-busy');
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            currentVariantId = null;
         }
+
+        cancelBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentVariantId) return;
+
+            const newQty = parseInt(qtyInput.value, 10);
+            submitBtn.disabled = true;
+            idleSpan.classList.add('hidden');
+            busySpan.classList.remove('hidden');
+
+            try {
+                const res = await fetch(`/admin/products/variants/${currentVariantId}/update-stock`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ stock_quantity: newQty })
+                });
+
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.message || 'Update failed.');
+
+                const badge = document.getElementById(`variant-stock-badge-${currentVariantId}`);
+                if (badge) {
+                    badge.textContent = newQty;
+                    badge.className = 'px-2 py-1 inline-flex text-sm font-medium rounded-full';
+                    badge.classList.add(...(newQty <= currentStockAlert
+                        ? ['bg-red-100', 'text-red-800']
+                        : ['bg-green-100', 'text-green-800']));
+                }
+
+                closeModal();
+            } catch (err) {
+                alert(err.message || 'Something went wrong.');
+            } finally {
+                submitBtn.disabled = false;
+                idleSpan.classList.remove('hidden');
+                busySpan.classList.add('hidden');
+            }
+        });
+
+        window.openVariantStockModal = function (variantId, qty, alert) {
+            currentVariantId = variantId;
+            currentStockAlert = alert;
+            qtyInput.value = qty;
+            modal.classList.remove('hidden');
+            qtyInput.focus();
+        };
+    })();
     </script>
 @endsection

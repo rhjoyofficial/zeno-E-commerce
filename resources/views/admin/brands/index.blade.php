@@ -2,7 +2,7 @@
 @section('title', 'Brands Management')
 @section('content')
 
-<div class="container mx-auto px-4 py-8" x-data="brandManagement()">
+<div class="container mx-auto px-4 py-8">
     <div class="bg-white border border-gray-200 rounded-lg">
         <!-- Header Section -->
         <div class="bg-white p-6 border-b border-gray-200">
@@ -11,7 +11,7 @@
                     <h1 class="text-2xl font-semibold text-gray-900">Brands Management</h1>
                     <p class="text-gray-600 mt-1">Manage your product brands</p>
                 </div>
-                <button @click="showCreateModal = true"
+                <button id="brand-open-create"
                     class="px-5 py-2.5 bg-gray-900 text-white hover:bg-gray-800 transition-colors text-sm font-medium rounded-lg flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -28,55 +28,41 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Logo
-                        </th>
-                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name
-                        </th>
-                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status</th>
-                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Logo</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @foreach ($brands as $brand)
                     <tr class="hover:bg-gray-50 transition-colors">
-                        <!-- Logo Column -->
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <img src="{{ asset('storage/' . $brand->brand_image) }}"
-                                    class="h-12 w-12 object-cover rounded-lg border border-gray-200 shadow-sm"
-                                    alt="{{ $brand->brand_name }}"
-                                    onerror="this.src=`https://via.placeholder.com/48?text=LOGO`">
-                            </div>
+                            <img src="{{ asset('storage/' . $brand->brand_image) }}"
+                                class="h-12 w-12 object-cover rounded-lg border border-gray-200 shadow-sm"
+                                alt="{{ $brand->brand_name }}"
+                                onerror="this.src='https://via.placeholder.com/48?text=LOGO'">
                         </td>
 
-                        <!-- Name Column -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm font-medium text-gray-900">{{ $brand->brand_name }}</div>
                         </td>
 
-                        <!-- Status Column -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             <select class="status-dropdown w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1
-                                @if ($brand->status == 'active')
-                                    border-green-200 bg-green-50 text-green-700 focus:ring-green-500
-                                @else
-                                    border-red-200 bg-red-50 text-red-700 focus:ring-red-500
-                                @endif" onchange="updateBrandStatus(this.value, {{ $brand->id }})"
+                                @if ($brand->status == 'active') border-green-200 bg-green-50 text-green-700 focus:ring-green-500
+                                @else border-red-200 bg-red-50 text-red-700 focus:ring-red-500 @endif"
+                                onchange="updateBrandStatus(this.value, {{ $brand->id }})"
                                 data-brand-id="{{ $brand->id }}" data-current-status="{{ $brand->status }}">
-                                <option value="active" {{ $brand->status == 'active' ? 'selected' : '' }}>Active
-                                </option>
-                                <option value="inactive" {{ $brand->status == 'inactive' ? 'selected' : '' }}>
-                                    Inactive</option>
+                                <option value="active" {{ $brand->status == 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="inactive" {{ $brand->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
                             </select>
                         </td>
 
-                        <!-- Actions Column -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center space-x-2">
                                 <button
-                                    @click="openEditModal({{ $brand->id }}, '{{ $brand->brand_name }}', '{{ asset('storage/' . $brand->brand_image) }}', '{{ $brand->status }}')"
+                                    onclick="openBrandEditModal({{ $brand->id }}, '{{ addslashes($brand->brand_name) }}', '{{ asset('storage/' . $brand->brand_image) }}')"
                                     class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors rounded-md flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
@@ -85,8 +71,7 @@
                                     </svg>
                                     Edit
                                 </button>
-                                <form action="{{ route('admin.brands.destroy', $brand->id) }}" method="POST"
-                                    class="inline">
+                                <form action="{{ route('admin.brands.destroy', $brand->id) }}" method="POST" class="inline">
                                     @csrf @method('DELETE')
                                     <button type="submit"
                                         class="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors rounded-md flex items-center"
@@ -119,17 +104,123 @@
 </div>
 
 <script>
-    // Brand Status Update Function
+(function () {
+    const createModal = document.getElementById('brand-create-modal');
+    const editModal   = document.getElementById('brand-edit-modal');
+
+    const $ = (id) => document.getElementById(id);
+
+    // Open / close create modal
+    $('brand-open-create').addEventListener('click', () => createModal.classList.remove('hidden'));
+    $('brand-create-close').addEventListener('click', () => createModal.classList.add('hidden'));
+    $('brand-create-cancel').addEventListener('click', () => createModal.classList.add('hidden'));
+
+    // Open / close edit modal
+    $('brand-edit-close').addEventListener('click', () => editModal.classList.add('hidden'));
+    $('brand-edit-cancel').addEventListener('click', () => editModal.classList.add('hidden'));
+
+    // Close on backdrop click
+    [createModal, editModal].forEach(modal => {
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+    });
+
+    // Create form submit
+    $('brand-create-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn  = $('brand-create-submit');
+        const idleSpan   = $('brand-create-idle');
+        const busySpan   = $('brand-create-busy');
+        const errorEl    = $('brand-create-error');
+        const nameInput  = $('brand-create-name');
+        const logoInput  = $('brand-create-logo');
+
+        submitBtn.disabled = true;
+        idleSpan.classList.add('hidden');
+        busySpan.classList.remove('hidden');
+        errorEl.classList.add('hidden');
+
+        try {
+            const formData = new FormData();
+            formData.append('brand_name', nameInput.value);
+            formData.append('brandImg', logoInput.files[0]);
+            formData.append('status', 'active');
+
+            const res = await fetch('{{ route('admin.brands.store') }}', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                body: formData
+            });
+
+            if (!res.ok) throw new Error((await res.json()).message || 'Failed to create brand');
+            window.location.reload();
+        } catch (err) {
+            errorEl.textContent = err.message;
+            errorEl.classList.remove('hidden');
+            submitBtn.disabled = false;
+            idleSpan.classList.remove('hidden');
+            busySpan.classList.add('hidden');
+        }
+    });
+
+    // Edit form submit
+    $('brand-edit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn  = $('brand-edit-submit');
+        const idleSpan   = $('brand-edit-idle');
+        const busySpan   = $('brand-edit-busy');
+        const errorEl    = $('brand-edit-error');
+        const id         = $('brand-edit-id').value;
+        const nameInput  = $('brand-edit-name');
+        const logoInput  = $('brand-edit-logo');
+
+        submitBtn.disabled = true;
+        idleSpan.classList.add('hidden');
+        busySpan.classList.remove('hidden');
+        errorEl.classList.add('hidden');
+
+        try {
+            const formData = new FormData();
+            formData.append('_method', 'PUT');
+            formData.append('brand_name', nameInput.value);
+            formData.append('status', 'active');
+            if (logoInput.files[0]) formData.append('brandImg', logoInput.files[0]);
+
+            const res = await fetch(`/admin/brands/${id}`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                body: formData
+            });
+
+            if (!res.ok) throw new Error((await res.json()).message || 'Failed to update brand');
+            window.location.reload();
+        } catch (err) {
+            errorEl.textContent = err.message;
+            errorEl.classList.remove('hidden');
+            submitBtn.disabled = false;
+            idleSpan.classList.remove('hidden');
+            busySpan.classList.add('hidden');
+        }
+    });
+})();
+
+function openBrandEditModal(id, name, logo) {
+    document.getElementById('brand-edit-id').value = id;
+    document.getElementById('brand-edit-name').value = name;
+    document.getElementById('brand-edit-logo-preview').src = logo;
+    document.getElementById('brand-edit-logo').value = '';
+    document.getElementById('brand-edit-error').classList.add('hidden');
+    document.getElementById('brand-edit-modal').classList.remove('hidden');
+}
+
 async function updateBrandStatus(newStatus, brandId) {
     const select = document.querySelector(`select[data-brand-id="${brandId}"]`);
     const originalStatus = select.getAttribute('data-current-status');
-    
-    // Show loading state
+
     select.disabled = true;
     select.classList.add('opacity-50', 'cursor-not-allowed');
 
     try {
-        const response = await fetch(`/admin/brands/${brandId}/update-status`, {
+        const res = await fetch(`/admin/brands/${brandId}/update-status`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -139,151 +230,27 @@ async function updateBrandStatus(newStatus, brandId) {
             body: JSON.stringify({ status: newStatus })
         });
 
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
+        if (!res.ok) throw new Error('Failed to update status');
 
-        const data = await response.json();
-        
+        const data = await res.json();
         if (data.success) {
-            // Update styling
             select.className = 'status-dropdown w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1';
-            
-            if (newStatus === 'active') {
-                select.classList.add('border-green-200', 'bg-green-50', 'text-green-700', 'focus:ring-green-500');
-            } else {
-                select.classList.add('border-red-200', 'bg-red-50', 'text-red-700', 'focus:ring-red-500');
-            }
-
-            // Update data attribute
+            select.classList.add(
+                ...(newStatus === 'active'
+                    ? ['border-green-200', 'bg-green-50', 'text-green-700', 'focus:ring-green-500']
+                    : ['border-red-200', 'bg-red-50', 'text-red-700', 'focus:ring-red-500'])
+            );
             select.setAttribute('data-current-status', newStatus);
-
-            // Show success message
-            showToast(`Brand status updated to ${newStatus}`, 'success');
         } else {
             throw new Error(data.message || 'Failed to update status');
         }
-    } catch (error) {
-        // Revert to original status
+    } catch (err) {
         select.value = originalStatus;
-        showToast(error.message || 'Failed to update status', 'error');
+        alert(err.message);
     } finally {
         select.disabled = false;
         select.classList.remove('opacity-50', 'cursor-not-allowed');
     }
 }
-
-// Simple toast notification
-function showToast(message, type = 'info') {
-    // Remove existing toast
-    const existingToast = document.getElementById('status-toast');
-    if (existingToast) existingToast.remove();
-    
-    const toast = document.createElement('div');
-    toast.id = 'status-toast';
-    toast.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg text-white font-medium text-sm z-50 transform transition-all duration-300 ${
-        type === 'success' ? 'bg-green-500' : 
-        type === 'error' ? 'bg-red-500' : 'bg-blue-500'
-    }`;
-    toast.textContent = message;
-    
-    document.body.appendChild(toast);
-    
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
-}
-
-// Alpine.js for modal management
-document.addEventListener('alpine:init', () => {
-    Alpine.data('brandManagement', () => ({
-        showCreateModal: false,
-        showEditModal: false,
-        isSubmitting: false,
-        errorMessage: '',
-        brandForm: {
-            name: '',
-            logo: null,
-            status: 'active'
-        },
-        editForm: {
-            id: null,
-            name: '',
-            currentLogo: '',
-            newLogo: null,
-            status: 'active'
-        },
-
-        openEditModal(id, name, logo, status) {
-            this.editForm = {
-                id,
-                name,
-                currentLogo: logo,
-                newLogo: null,
-                status
-            };
-            this.showEditModal = true;
-        },
-
-        async submitBrandForm() {
-            this.isSubmitting = true;
-            this.errorMessage = '';
-
-            try {
-                const formData = new FormData();
-                formData.append('brand_name', this.brandForm.name);
-                formData.append('brandImg', this.brandForm.logo);
-                formData.append('status', this.brandForm.status);
-
-                await axios.post('{{ route('admin.brands.store') }}', formData);
-                window.location.reload();
-            } catch (error) {
-                this.handleError(error, 'Error creating brand');
-            } finally {
-                this.isSubmitting = false;
-            }
-        },
-
-        async submitEditForm() {
-            this.isSubmitting = true;
-            this.errorMessage = '';
-
-            try {
-                const formData = new FormData();
-                formData.append('_method', 'PUT');
-                formData.append('brand_name', this.editForm.name);
-                formData.append('status', this.editForm.status);
-                if (this.editForm.newLogo) {
-                    formData.append('brandImg', this.editForm.newLogo);
-                }
-
-                await axios.post(`/admin/brands/${this.editForm.id}`, formData);
-                window.location.reload();
-            } catch (error) {
-                this.handleError(error, 'Error updating brand');
-            } finally {
-                this.isSubmitting = false;
-            }
-        },
-
-        handleError(error, defaultMessage) {
-            let errorMessage = defaultMessage;
-
-            if (error.response) {
-                if (error.response.data && error.response.data.message) {
-                    errorMessage = error.response.data.message;
-                } else if (error.response.status === 422) {
-                    errorMessage = 'Validation error: ' +
-                        Object.values(error.response.data.errors).flat().join(', ');
-                }
-            } else if (error.request) {
-                errorMessage = 'No response received from server';
-            }
-
-            this.errorMessage = errorMessage;
-        }
-    }));
-});
 </script>
 @endsection
