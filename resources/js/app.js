@@ -1,24 +1,9 @@
 import './bootstrap';
-
-import Alpine from 'alpinejs';
-
-window.Alpine = Alpine;
-
-Alpine.start();
-
-document.addEventListener('alpine:initialized', () => {
-    Alpine.data('formTracker', () => ({
-        formChanged: false,
-        init() {
-            const form = this.$el.closest('form');
-            const initialData = new FormData(form);
-
-            form.addEventListener('change', () => {
-                const currentData = new FormData(form);
-                this.formChanged = ![...initialData].every(
-                    ([key, value]) => currentData.get(key) === value
-                );
-            });
-        }
-    }));
-});
+import './modules/preloader';
+import './modules/notification';
+import './modules/mobile-menu';
+import './modules/admin-sidebar';
+import './modules/form-tracker';
+import './modules/product-popup';
+import './modules/slider';
+import './modules/cart';

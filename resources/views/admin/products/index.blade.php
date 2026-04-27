@@ -156,169 +156,143 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @foreach ($products as $product)
-                                        <tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="flex items-center">
-                                                    <div class="flex-shrink-0 h-12 w-12">
-                                                        <img class="h-12 w-12 object-cover"
-                                                            src="{{ $product->images->first()?->image_path ? asset('storage/' . $product->images->first()->image_path) : asset('images/default.png') }}"
-                                                            alt="{{ $product->title }}">
-                                                    </div>
-                                                    <div class="ml-4">
-                                                        <div class="text-sm font-medium text-gray-900">{{ $product->title }}</div>
-                                                        <div class="text-sm text-gray-500">
-                                                            {{ Str::limit($product->short_description, 30) }}
-                                                        </div>
-                                                    </div>
+                                @php
+                                    $stockClass = $product->stock_quantity <= $product->stock_alert
+                                        ? 'bg-red-100 text-red-800'
+                                        : 'bg-green-100 text-green-800';
+                                @endphp
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-12 w-12">
+                                                <img class="h-12 w-12 object-cover"
+                                                    src="{{ $product->images->first()?->image_path ? asset('storage/' . $product->images->first()->image_path) : asset('images/default.png') }}"
+                                                    alt="{{ $product->title }}">
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">{{ $product->title }}</div>
+                                                <div class="text-sm text-gray-500">
+                                                    {{ Str::limit($product->short_description, 30) }}
                                                 </div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-900">
-                                                    @if ($product->discount > 0 && $product->discount_price < $product->price)
-                                                        <span class="font-bold">
-                                                            {{ number_format($product->discount_price, 2) }}৳
-                                                        </span>
-                                                        <span class="text-sm text-gray-500 line-through ml-1">
-                                                            {{ number_format($product->price, 2) }}৳
-                                                        </span>
-                                                    @else
-                                                        <span class="font-bold">
-                                                            {{ number_format($product->price, 2) }}৳
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                                @if ($product->discount > 0 && $product->discount_price < $product->price)
-                                                    @php
-                                                        $discountPercent =
-                                                            (($product->price - $product->discount_price) / $product->price) *
-                                                            100;
-                                                    @endphp
-                                                    <span
-                                                        class="mt-1 inline-block px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                                                        {{ number_format($discountPercent, 2) }}% OFF
-                                                    </span>
-                                                @endif
-                                            </td>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            @if ($product->discount > 0 && $product->discount_price < $product->price)
+                                                <span class="font-bold">
+                                                    {{ number_format($product->discount_price, 2) }}৳
+                                                </span>
+                                                <span class="text-sm text-gray-500 line-through ml-1">
+                                                    {{ number_format($product->price, 2) }}৳
+                                                </span>
+                                            @else
+                                                <span class="font-bold">
+                                                    {{ number_format($product->price, 2) }}৳
+                                                </span>
+                                            @endif
+                                        </div>
+                                        @if ($product->discount > 0 && $product->discount_price < $product->price)
+                                            @php
+                                                $discountPercent =
+                                                    (($product->price - $product->discount_price) / $product->price) *
+                                                    100;
+                                            @endphp
+                                            <span
+                                                class="mt-1 inline-block px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                                {{ number_format($discountPercent, 2) }}% OFF
+                                            </span>
+                                        @endif
+                                    </td>
 
-                                            <!-- Stock Quantity Cell -->
-                                            <td class="px-6 py-4 whitespace-nowrap"
-                                                x-data="stockModal({{ $product->id }}, {{ $product->stock_quantity }}, {{ $product->stock_alert }})"
-                                                data-product-id="{{ $product->id }}">
-                                                <button type="button" class="w-full text-left focus:outline-none" @click="open = true">
-                                                    <div class="text-sm">
-                                                        <span class="stock-display px-2 py-1 inline-flex text-sm font-medium rounded-full"
-                                                            :class="stock_quantity <= stock_alert ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
-                                                            x-text="stock_quantity"></span>
-                                                    </div>
-                                                </button>
-                                                <!-- Modal -->
-                                                <div x-show="open" style="display: none;"
-                                                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-                                                    x-transition role="dialog" aria-modal="true"
-                                                    aria-labelledby="stock-modal-title-{{ $product->id }}">
-                                                    <div class="bg-white p-6 w-80 max-w-[90vw] rounded-lg">
-                                                        <h2 id="stock-modal-title-{{ $product->id }}" class="text-lg font-semibold mb-4">
-                                                            Update Stock Quantity</h2>
-                                                        <form @submit.prevent="submit">
-                                                            <input type="number" x-model="newQty"
-                                                                class="w-full px-3 py-2 text-sm font-medium border border-gray-300 focus:outline-none focus:ring focus:border-black"
-                                                                min="0" required aria-label="New stock quantity">
-                                                            <div class="mt-4 flex justify-end space-x-2">
-                                                                <button type="button" @click="open = false"
-                                                                    class="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
-                                                                    Cancel
-                                                                </button>
-                                                                <button type="submit" class="px-6 py-2 bg-black text-white"
-                                                                    :disabled="isSubmitting"
-                                                                    :class="isSubmitting ? 'opacity-50 cursor-not-allowed' : ''">
-                                                                    <span x-show="isSubmitting"
-                                                                        class="animate-spin mr-1 inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
-                                                                    <span x-show="!isSubmitting">Save</span>
-                                                                </button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </td>
+                                    <!-- Stock Quantity Cell -->
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <button type="button" class="w-full text-left focus:outline-none"
+                                            onclick="openStockModal({{ $product->id }}, {{ $product->stock_quantity }}, {{ $product->stock_alert }})">
+                                            <div class="text-sm">
+                                                <span id="stock-badge-{{ $product->id }}"
+                                                    class="px-2 py-1 inline-flex text-sm font-medium rounded-full {{ $stockClass }}">
+                                                    {{ $product->stock_quantity }}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    </td>
 
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="flex items-center">
-                                                    <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path
-                                                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
-                                                        </path>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                                                </path>
+                                            </svg>
+                                            <span class="ml-1 text-sm text-gray-600">{{ number_format($product->avg_rating, 1) ?? 'N/A' }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <select
+                                            class="status-dropdown w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1
+                                                @if ($product->status == 'active') border-green-200 bg-green-50 text-green-700 focus:ring-green-500
+                                                @elseif ($product->status == 'inactive') border-red-200 bg-red-50 text-red-700 focus:ring-red-500
+                                                @else border-gray-200 bg-gray-50 text-gray-700 focus:ring-gray-500 @endif"
+                                            onchange="simpleUpdateStatus(this, {{ $product->id }})"
+                                            data-product-id="{{ $product->id }}"
+                                            data-current-status="{{ $product->status }}">
+                                            <option value="active" {{ $product->status == 'active' ? 'selected' : '' }}>
+                                                Active
+                                            </option>
+                                            <option value="inactive" {{ $product->status == 'inactive' ? 'selected' : '' }}>Inactive
+                                            </option>
+                                            <option value="discontinued" {{ $product->status == 'discontinued' ? 'selected' : '' }}>Discontinued
+                                            </option>
+                                        </select>
+                                    </td>
+
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex justify-end space-x-2">
+                                            @if ($product->has_variants)
+                                                <a href="{{ route('admin.products.variants.index', $product->id) }}"
+                                                    class="text-purple-600 hover:text-purple-900" title="Manage Variants">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                                                     </svg>
-                                                    <span class="ml-1 text-sm text-gray-600">{{ number_format($product->avg_rating, 1) ??
-                                'N/A' }}</span>
-                                                </div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <select
-                                                    class="status-dropdown w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1
-                                                                                        @if ($product->status == 'active') border-green-200 bg-green-50 text-green-700 focus:ring-green-500
-                                                                                        @elseif ($product->status == 'inactive')
-                                                                                            border-red-200 bg-red-50 text-red-700 focus:ring-red-500
-                                                                                        @else
-                                                                                        border-gray-200 bg-gray-50 text-gray-700 focus:ring-gray-500 @endif"
-                                                    onchange="simpleUpdateStatus(this, {{ $product->id }})"
-                                                    data-product-id="{{ $product->id }}">
-                                                    <option value="active" {{ $product->status == 'active' ? 'selected' : '' }}>
-                                                        Active
-                                                    </option>
-                                                    <option value="inactive" {{ $product->status == 'inactive' ? 'selected' : '' }}>Inactive
-                                                    </option>
-                                                    <option value="discontinued" {{ $product->status == 'discontinued' ? 'selected' : ''
-                                                        }}>Discontinued
-                                                    </option>
-                                                </select>
-                                            </td>
-
-                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div class="flex justify-end space-x-2">
-                                                    @if ($product->has_variants)
-                                                        <a href="{{ route('admin.products.variants.index', $product->id) }}"
-                                                            class="text-purple-600 hover:text-purple-900" title="Manage Variants">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                    d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                                                            </svg>
-                                                        </a>
-                                                    @endif
-                                                    <a href="{{ route('admin.products.edit', $product->id) }}"
-                                                        class="text-blue-600 hover:text-blue-900">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                            viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                        </svg>
-                                                    </a>
-                                                    <form action="{{ route('admin.products.destroy', $product->id) }}" method="POST"
-                                                        class="inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:text-red-900"
-                                                            onclick="return confirm('Are you sure you want to delete this product?')">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                            </svg>
-                                                        </button>
-                                                    </form>
-                                                    <a href="{{ route('admin.products.show', $product->id) }}"
-                                                        class="text-green-600 hover:text-green-900">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                            viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                        </svg>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                </a>
+                                            @endif
+                                            <a href="{{ route('admin.products.edit', $product->id) }}"
+                                                class="text-blue-600 hover:text-blue-900">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                            </a>
+                                            <form action="{{ route('admin.products.destroy', $product->id) }}" method="POST"
+                                                class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900"
+                                                    onclick="return confirm('Are you sure you want to delete this product?')">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                            <a href="{{ route('admin.products.show', $product->id) }}"
+                                                class="text-green-600 hover:text-green-900">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
                             @endforeach
                         </tbody>
                     </table>
@@ -352,158 +326,144 @@
         @endif
     </div>
 
+    <!-- Shared Stock Modal -->
+    <div id="stock-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        role="dialog" aria-modal="true" aria-labelledby="stock-modal-title">
+        <div class="bg-white p-6 w-80 max-w-[90vw] rounded-lg">
+            <h2 id="stock-modal-title" class="text-lg font-semibold mb-4">Update Stock Quantity</h2>
+            <form id="stock-modal-form">
+                <input id="stock-modal-qty" type="number"
+                    class="w-full px-3 py-2 text-sm font-medium border border-gray-300 focus:outline-none focus:ring focus:border-black"
+                    min="0" required aria-label="New stock quantity">
+                <div class="mt-4 flex justify-end space-x-2">
+                    <button type="button" id="stock-modal-cancel"
+                        class="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" id="stock-modal-submit" class="px-6 py-2 bg-black text-white">
+                        <span id="stock-modal-idle">Save</span>
+                        <span id="stock-modal-busy" class="hidden">
+                            <span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-1"></span>
+                            Saving...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        async function simpleUpdateStatus(select, productId) {
-            const newStatus = select.value;
-            const originalStatus = select.getAttribute('data-current-status') || select.querySelector('option[selected]').value;
-            select.disabled = true;
-            select.classList.add('opacity-50', 'cursor-not-allowed');
+    (function () {
+        let currentProductId = null;
+        let currentStockAlert = 0;
+
+        const modal      = document.getElementById('stock-modal');
+        const form       = document.getElementById('stock-modal-form');
+        const qtyInput   = document.getElementById('stock-modal-qty');
+        const cancelBtn  = document.getElementById('stock-modal-cancel');
+        const submitBtn  = document.getElementById('stock-modal-submit');
+        const idleSpan   = document.getElementById('stock-modal-idle');
+        const busySpan   = document.getElementById('stock-modal-busy');
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            currentProductId = null;
+        }
+
+        cancelBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentProductId) return;
+
+            const newQty = parseInt(qtyInput.value, 10);
+            submitBtn.disabled = true;
+            idleSpan.classList.add('hidden');
+            busySpan.classList.remove('hidden');
 
             try {
-                const response = await fetch(`/admin/products/${productId}/update-status`, {
+                const res = await fetch(`/admin/products/${currentProductId}/update-stock`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ status: newStatus })
+                    body: JSON.stringify({ stock_quantity: newQty })
                 });
 
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.message || 'Update failed.');
+
+                const badge = document.getElementById(`stock-badge-${currentProductId}`);
+                if (badge) {
+                    badge.textContent = newQty;
+                    badge.className = 'px-2 py-1 inline-flex text-sm font-medium rounded-full';
+                    badge.classList.add(...(newQty <= currentStockAlert
+                        ? ['bg-red-100', 'text-red-800']
+                        : ['bg-green-100', 'text-green-800']));
                 }
 
-                const data = await response.json();
-                if (!data.success) {
-                    throw new Error(data.message || 'Failed to update status');
-                }
-
-                // Update styling
-                select.className = 'status-dropdown w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1';
-                if (newStatus === 'active') {
-                    select.classList.add('border-green-200', 'bg-green-50', 'text-green-700', 'focus:ring-green-500');
-                } else if (newStatus === 'inactive') {
-                    select.classList.add('border-red-200', 'bg-red-50', 'text-red-700', 'focus:ring-red-500');
-                } else {
-                    select.classList.add('border-gray-200', 'bg-gray-50', 'text-gray-700', 'focus:ring-gray-500');
-                }
-
-                // Update data attribute for future reference
-                select.setAttribute('data-current-status', newStatus);
-
-                // Show success notification
-                NotificationSystem.show({
-                    type: 'success',
-                    title: 'Status Updated',
-                    message: `Product status changed to ${newStatus}.`,
-                    duration: 5000
-                });
-            } catch (error) {
-                // Revert to original status
-                select.value = originalStatus;
-                NotificationSystem.show({
-                    type: 'error',
-                    title: 'Error',
-                    message: error.message || 'Failed to update status.',
-                    duration: 5000
-                });
+                NotificationSystem.show({ type: 'success', title: 'Stock Updated', message: `Stock updated to ${newQty}.`, duration: 5000 });
+                closeModal();
+            } catch (err) {
+                NotificationSystem.show({ type: 'error', title: 'Error', message: err.message || 'Failed to update stock.', duration: 5000 });
             } finally {
-                select.disabled = false;
-                select.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.disabled = false;
+                idleSpan.classList.remove('hidden');
+                busySpan.classList.add('hidden');
             }
-        }
+        });
 
-        function stockModal(productId, initialQty, stockAlert) {
-            return {
-                open: false,
-                newQty: initialQty,
-                stock_quantity: initialQty,
-                stock_alert: stockAlert,
-                isSubmitting: false,
-                submit() {
-                    this.isSubmitting = true;
-                    fetch(`/admin/products/${productId}/update-stock`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            stock_quantity: parseInt(this.newQty)
-                        })
-                    })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! Status: ${response.status}`);
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data.success) {
-                                this.stock_quantity = parseInt(this.newQty);
-                                this.open = false;
+        window.openStockModal = function (productId, qty, alert) {
+            currentProductId = productId;
+            currentStockAlert = alert;
+            qtyInput.value = qty;
+            modal.classList.remove('hidden');
+            qtyInput.focus();
+        };
+    })();
 
-                                // Update stock display
-                                const stockDisplay = document.querySelector(`td[data-product-id="${productId}"] .stock-display`);
-                                if (stockDisplay) {
-                                    stockDisplay.textContent = this.stock_quantity;
-                                    stockDisplay.className = 'stock-display px-2 py-1 inline-flex text-sm font-medium rounded-full';
-                                    stockDisplay.classList.add(this.stock_quantity <= this.stock_alert ? 'bg-red-100' : 'bg-green-100');
-                                    stockDisplay.classList.add(this.stock_quantity <= this.stock_alert ? 'text-red-800' : 'text-green-800');
-                                } else {
-                                    console.warn('Stock display element not found for product ID:', productId);
-                                }
+    async function simpleUpdateStatus(select, productId) {
+        const newStatus = select.value;
+        const originalStatus = select.getAttribute('data-current-status');
+        select.disabled = true;
+        select.classList.add('opacity-50', 'cursor-not-allowed');
 
-                                // Show success notification
-                                NotificationSystem.show({
-                                    type: 'success',
-                                    title: 'Stock Updated',
-                                    message: `Stock quantity updated to ${this.stock_quantity}.`,
-                                    duration: 5000
-                                });
-                            } else {
-                                throw new Error(data.message || 'Update failed.');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            NotificationSystem.show({
-                                type: 'error',
-                                title: 'Error',
-                                message: error.message || 'Failed to update stock quantity.',
-                                duration: 5000
-                            });
-                        })
-                        .finally(() => {
-                            this.isSubmitting = false;
-                        });
+        try {
+            const response = await fetch(`/admin/products/${productId}/update-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
                 },
-                init() {
-                    // Trap focus within modal
-                    this.$watch('open', value => {
-                        if (value) {
-                            this.$nextTick(() => {
-                                const input = this.$el.querySelector('input');
-                                if (input) input.focus();
-                                const focusable = this.$el.querySelectorAll('button, input');
-                                this.$el.addEventListener('keydown', e => {
-                                    if (e.key === 'Tab') {
-                                        e.preventDefault();
-                                        const current = document.activeElement;
-                                        const index = Array.from(focusable).indexOf(current);
-                                        const nextIndex = e.shiftKey ? index - 1 : index + 1;
-                                        if (nextIndex >= focusable.length) focusable[0].focus();
-                                        else if (nextIndex < 0) focusable[focusable.length - 1].focus();
-                                        else focusable[nextIndex].focus();
-                                    }
-                                });
-                            });
-                        }
-                    });
-                }
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.message || 'Failed to update status');
+
+            select.className = 'status-dropdown w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1';
+            if (newStatus === 'active') {
+                select.classList.add('border-green-200', 'bg-green-50', 'text-green-700', 'focus:ring-green-500');
+            } else if (newStatus === 'inactive') {
+                select.classList.add('border-red-200', 'bg-red-50', 'text-red-700', 'focus:ring-red-500');
+            } else {
+                select.classList.add('border-gray-200', 'bg-gray-50', 'text-gray-700', 'focus:ring-gray-500');
             }
+            select.setAttribute('data-current-status', newStatus);
+
+            NotificationSystem.show({ type: 'success', title: 'Status Updated', message: `Product status changed to ${newStatus}.`, duration: 5000 });
+        } catch (error) {
+            select.value = originalStatus;
+            NotificationSystem.show({ type: 'error', title: 'Error', message: error.message || 'Failed to update status.', duration: 5000 });
+        } finally {
+            select.disabled = false;
+            select.classList.remove('opacity-50', 'cursor-not-allowed');
         }
+    }
     </script>
 @endsection

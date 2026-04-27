@@ -1,11 +1,12 @@
-<div x-data="{ open: false }" class="relative ml-3">
+<div class="relative ml-3">
     <div>
-        <button @click="open = !open" type="button"
+        <button id="admin-user-menu-btn" type="button"
             class="flex items-center max-w-xs text-sm rounded-full focus:outline-none focus:border-none focus:ring-0"
-            id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+            aria-expanded="false" aria-haspopup="true">
             <span class="sr-only">Open user menu</span>
             <img class="h-8 w-8 rounded-full"
-                src="{{ Auth::user()->avatar ?? 'https://ui-avatars.com/api/?name='.urlencode(Auth::user()->name).'&color=7F9CF5&background=EBF4FF' }}"
+                src="{{ asset('images/default-avatar.png') }}"
+                onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&color=7F9CF5&background=EBF4FF'"
                 alt="{{ Auth::user()->name }}">
             <span class="ml-2 hidden md:inline-block text-sm font-medium text-gray-700">{{ Auth::user()->name }}</span>
             <svg class="ml-1 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -17,14 +18,11 @@
     </div>
 
     <!-- Dropdown menu -->
-    <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-100" style="display: none;"
-        x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100"
-        x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100"
-        x-transition:leave-end="transform opacity-0 scale-95"
+    <div id="admin-user-menu" style="display:none;"
         class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white focus:outline-none z-50"
-        role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+        role="menu" aria-orientation="vertical" aria-labelledby="admin-user-menu-btn" tabindex="-1">
         <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
-            role="menuitem" tabindex="-1" id="user-menu-item-0">
+            role="menuitem" tabindex="-1">
             <div class="flex items-center">
                 <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -35,7 +33,7 @@
         </a>
         <a href="{{ route('admin.settings.index') }}"
             class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
-            role="menuitem" tabindex="-1" id="user-menu-item-1">
+            role="menuitem" tabindex="-1">
             <div class="flex items-center">
                 <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -52,7 +50,7 @@
             @csrf
             <button type="submit"
                 class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
-                role="menuitem" tabindex="-1" id="user-menu-item-2">
+                role="menuitem" tabindex="-1">
                 <div class="flex items-center">
                     <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -65,3 +63,20 @@
         </form>
     </div>
 </div>
+
+<script>
+(function () {
+    const btn = document.getElementById('admin-user-menu-btn');
+    const menu = document.getElementById('admin-user-menu');
+    if (!btn || !menu) return;
+
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.addEventListener('click', () => {
+        menu.style.display = 'none';
+    });
+})();
+</script>

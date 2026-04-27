@@ -1,20 +1,13 @@
-<nav x-data="{
-    isMobileMenuOpen: false,
-    searchOpen: false,
-    activeMenu: null,
-    activeSubmenu: null,
-    activeUser: false
-}"
-    class="bg-white sticky top-0 z-50 py-2 text-lg font-semibold text-black border-b border-gray-200">
+<nav id="main-nav" class="bg-white sticky top-0 z-50 py-2 text-lg font-semibold text-black border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Search Bar Overlay -->
-        <div x-show="searchOpen" x-cloak class="fixed inset-0 z-50 h-16" @click.away="searchOpen = false">
+        <div id="search-overlay" class="hidden fixed inset-0 z-50 h-16">
             <div class="container mx-auto flex items-center justify-between p-4">
                 <form class="flex-1 flex max-w-3xl mx-auto" action="/search">
                     <input type="text" placeholder="Search products..."
                         class="w-full px-4 py-2 text-lg border-b-2 border-gray-300 focus:border-indigo-600 outline-none"
                         autofocus>
-                    <button type="button" @click="searchOpen = false" class="ml-4 hover:text-gray-700">
+                    <button type="button" data-search-close class="ml-4 hover:text-gray-700">
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
@@ -32,41 +25,38 @@
 
             <!-- Desktop Menu -->
             <div class="hidden md:flex md:items-center m-0 flex-1 justify-center relative">
-                <!-- Men Menu -->
-                <button @mouseenter="activeMenu = 'men'" @mouseleave="activeMenu = null"
+                <button data-mega-menu="men"
                     class="hover:text-gray-700 px-3 py-2 transition-colors uppercase mr-2 last:mr-0">
                     Men
                 </button>
-                <button @mouseenter="activeMenu = 'women'" @mouseleave="activeMenu = null"
+                <button data-mega-menu="women"
                     class="hover:text-gray-700 px-3 py-2 transition-colors uppercase mr-2 last:mr-0">
                     Women
                 </button>
-                <button @mouseenter="activeMenu = 'kid'" @mouseleave="activeMenu = null"
+                <button data-mega-menu="kid"
                     class="hover:text-gray-700 px-3 py-2 transition-colors uppercase mr-2 last:mr-0">
                     Kid
                 </button>
-                <button @mouseenter="activeMenu = 'accessories'" @mouseleave="activeMenu = null"
+                <button data-mega-menu="accessories"
                     class="hover:text-gray-700 px-3 py-2 transition-colors uppercase mr-2 last:mr-0">
                     Accessories
                 </button>
-                <button @mouseenter="activeMenu = 'sale'" @mouseleave="activeMenu = null"
+                <button data-mega-menu="sale"
                     class="text-red-600 hover:text-red-700 px-3 py-2 transition-colors font-semibold uppercase mr-2 last:mr-0">
                     Sale
                 </button>
             </div>
 
-            <!-- Full-width Mega Menu -->
-            <div @mouseenter="activeMenu = 'men'" @mouseleave="activeMenu = null"
-                class="absolute top-3/4 left-0 right-0 w-full z-20" x-show="activeMenu === 'men'" x-cloak>
+            <!-- Full-width Mega Menu — Men -->
+            <div data-mega-menu-panel="men"
+                class="hidden absolute top-3/4 left-0 right-0 w-full z-20">
                 <div class="bg-white shadow-xl py-8 px-4 border-t border-gray-100 -md mt-5">
-                    <!-- Grid Container -->
                     <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
                         <!-- Categories Column -->
                         <div class="space-y-4">
                             <h3 class="font-semibold text-gray-900 text-lg mb-4">Men's Categories</h3>
                             <div class="grid grid-cols-2 gap-x-6 gap-y-3">
-                                <div class="relative group" @mouseenter="activeSubmenu = 'clothing'"
-                                    @mouseleave="activeSubmenu = null">
+                                <div class="relative group" data-submenu="clothing">
                                     <button
                                         class="w-full text-left hover:text-gray-700 flex justify-between items-center">
                                         Clothing
@@ -77,9 +67,8 @@
                                         </svg>
                                     </button>
                                     <!-- Submenu -->
-                                    <div x-show="activeSubmenu === 'clothing'" @mouseenter="activeSubmenu = 'clothing'"
-                                        @mouseleave="activeSubmenu = null"
-                                        class="absolute left-full top-0 bg-white p-4 shadow-lg w-64 rounded-lg border border-gray-100 z-30">
+                                    <div data-submenu-panel="clothing"
+                                        class="hidden absolute left-full top-0 bg-white p-4 shadow-lg w-64 rounded-lg border border-gray-100 z-30">
                                         <a href="#" class="block py-2 px-4 hover: ">T-Shirts</a>
                                         <a href="#" class="block py-2 px-4 hover: ">Shirts</a>
                                         <a href="#" class="block py-2 px-4 hover: ">Jeans</a>
@@ -87,7 +76,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Repeat similar structure for other categories -->
                                 <div class="relative group">
                                     <button class="w-full text-left hover:text-gray-700">Footwear</button>
                                 </div>
@@ -170,7 +158,7 @@
             <!-- Right Icons -->
             <div class="flex items-center relative">
                 <!-- Search Icon (Mobile) -->
-                <button @click="searchOpen = true" class="p-2 hover:text-gray-700 md:hidden mr-2 last:mr-0">
+                <button data-search-open class="p-2 hover:text-gray-700 md:hidden mr-2 last:mr-0">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                         xmlns="http://www.w3.org/2000/svg">
                         <path
@@ -183,7 +171,7 @@
 
                 <!-- Search Icon (Desktop) -->
                 <div class="hidden md:flex items-center space-x-2">
-                    <button @click="searchOpen = true" class="p-2 hover:text-gray-700 mr-2 last:mr-0">
+                    <button data-search-open class="p-2 hover:text-gray-700 mr-2 last:mr-0">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                             xmlns="http://www.w3.org/2000/svg">
                             <path
@@ -229,7 +217,7 @@
         </div>
 
         <!-- Mobile Menu -->
-        <div class="md:hidden" x-show="isMobileMenuOpen" @click.away="isMobileMenuOpen = false" x-cloak>
+        <div id="mobile-menu" class="hidden md:hidden">
             <div class="px-2 pt-2 pb-3 space-y-1">
                 <a href="#" class="block px-3 py-2 hover:text-gray-700 hover:bg-gray-100 uppercase">Men</a>
                 <a href="#" class="block px-3 py-2 hover:text-gray-700 hover:bg-gray-100 uppercase">Women</a>

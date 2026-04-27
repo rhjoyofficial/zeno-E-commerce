@@ -1,19 +1,13 @@
-<nav x-data="{
-    isMobileMenuOpen: false,
-    searchOpen: false,
-    activeMenu: null,
-    activeSubmenu: null,
-    activeUser: false
-}" class="bg-white sticky top-0 z-50 py-2 text-lg font-semibold text-black border-b border-gray-200">
+<nav id="main-nav" class="bg-white sticky top-0 z-50 py-2 text-lg font-semibold text-black border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Search Bar Overlay -->
-        <div x-show="searchOpen" x-cloak class="fixed inset-0 z-50 h-16" @click.away="searchOpen = false">
+        <div id="search-overlay" class="hidden fixed inset-0 z-50 h-16">
             <div class="container mx-auto flex items-center justify-between p-4">
                 <form class="flex-1 flex max-w-3xl mx-auto" action="/search">
                     <input type="text" placeholder="Search products..."
                         class="w-full px-4 py-2 text-lg border-b-2 border-gray-300 focus:border-indigo-600 outline-none"
                         autofocus>
-                    <button type="button" @click="searchOpen = false" class="ml-4 hover:text-gray-700">
+                    <button type="button" data-search-close class="ml-4 hover:text-gray-700">
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
@@ -32,126 +26,114 @@
             <!-- Desktop Menu -->
             <div class="hidden md:flex md:items-center m-0 flex-1 justify-center relative">
                 @foreach($navigationMenus as $menu)
-                @if($menu->is_mega_menu)
-                <!-- Mega Menu Items -->
-                <button @mouseenter="activeMenu = '{{ $menu->slug }}'" @mouseleave="activeMenu = null"
-                    class="hover:text-gray-700 px-3 py-2 transition-colors uppercase mr-2 last:mr-0 {{ $menu->slug === 'sale' ? 'text-red-600 hover:text-red-700' : '' }}">
-                    {{ $menu->name }}
-                </button>
-                @else
-                <!-- Regular Menu Items -->
-                <a href="{{ $menu->items->first()->link ?? '#' }}"
-                    class="hover:text-gray-700 px-3 py-2 transition-colors uppercase mr-2 last:mr-0 {{ $menu->slug === 'sale' ? 'text-red-600 hover:text-red-700' : '' }}">
-                    {{ $menu->name }}
-                </a>
-                @endif
+                    @if($menu->is_mega_menu)
+                        <button data-mega-menu="{{ $menu->slug }}"
+                            class="hover:text-gray-700 px-3 py-2 transition-colors uppercase mr-2 last:mr-0 {{ $menu->slug === 'sale' ? 'text-red-600 hover:text-red-700' : '' }}">
+                            {{ $menu->name }}
+                        </button>
+                    @else
+                        <a href="{{ $menu->items->first()->link ?? '#' }}"
+                            class="hover:text-gray-700 px-3 py-2 transition-colors uppercase mr-2 last:mr-0 {{ $menu->slug === 'sale' ? 'text-red-600 hover:text-red-700' : '' }}">
+                            {{ $menu->name }}
+                        </a>
+                    @endif
                 @endforeach
             </div>
 
             <!-- Mega Menus -->
             @foreach($navigationMenus as $menu)
-            @if($menu->is_mega_menu)
-            <!-- Full-width Mega Menu -->
-            <div @mouseenter="activeMenu = '{{ $menu->slug }}'" @mouseleave="activeMenu = null"
-                class="absolute top-3/4 left-0 right-0 w-full z-20" x-show="activeMenu === '{{ $menu->slug }}'" x-cloak>
-                <div class="bg-white shadow-xl py-8 px-4 border-t border-gray-100 -md mt-5">
-                    <!-- Grid Container -->
-                    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
-                        @foreach($menu->megaMenuContents as $content)
-                        @if($content->is_active)
-                        <div class="space-y-4">
-                            <h3 class="font-semibold text-gray-900 text-lg mb-4">{{ $content->title }}</h3>
+                @if($menu->is_mega_menu)
+                    <div data-mega-menu-panel="{{ $menu->slug }}"
+                        class="hidden absolute top-3/4 left-0 right-0 w-full z-20">
+                        <div class="bg-white shadow-xl py-8 px-4 border-t border-gray-100 -md mt-5">
+                            <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
+                                @foreach($menu->megaMenuContents as $content)
+                                    @if($content->is_active)
+                                        <div class="space-y-4">
+                                            <h3 class="font-semibold text-gray-900 text-lg mb-4">{{ $content->title }}</h3>
 
-                            @switch($content->type)
-                            @case('categories')
-                            <div class="grid grid-cols-2 gap-x-6 gap-y-3">
-                                @foreach(json_decode($content->content, true) as $category)
-                                <div class="relative group" @mouseenter="activeSubmenu = '{{ $category['slug'] }}'"
-                                    @mouseleave="activeSubmenu = null">
-                                    <button
-                                        class="w-full text-left hover:text-gray-700 flex justify-between items-center">
-                                        {{ $category['name'] }}
-                                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </button>
-                                    <!-- Submenu -->
-                                    @if(isset($category['children']) && count($category['children']) > 0)
-                                    <div x-show="activeSubmenu === '{{ $category['slug'] }}'"
-                                        @mouseenter="activeSubmenu = '{{ $category['slug'] }}'"
-                                        @mouseleave="activeSubmenu = null"
-                                        class="absolute left-full top-0 bg-white p-4 shadow-lg w-64 rounded-lg border border-gray-100 z-30">
-                                        @foreach($category['children'] as $child)
-                                        <a href="/category/{{ $child['slug'] }}"
-                                            class="block py-2 px-4 hover:bg-gray-100">{{ $child['name'] }}</a>
-                                        @endforeach
-                                    </div>
+                                            @switch($content->type)
+                                                @case('categories')
+                                                    <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                                                        @foreach(json_decode($content->content, true) as $category)
+                                                            <div class="relative group" data-submenu="{{ $category['slug'] }}">
+                                                                <button class="w-full text-left hover:text-gray-700 flex justify-between items-center">
+                                                                    {{ $category['name'] }}
+                                                                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                            d="M9 5l7 7-7 7" />
+                                                                    </svg>
+                                                                </button>
+                                                                @if(isset($category['children']) && count($category['children']) > 0)
+                                                                    <div data-submenu-panel="{{ $category['slug'] }}"
+                                                                        class="hidden absolute left-full top-0 bg-white p-4 shadow-lg w-64 rounded-lg border border-gray-100 z-30">
+                                                                        @foreach($category['children'] as $child)
+                                                                            <a href="/category/{{ $child['slug'] }}"
+                                                                                class="block py-2 px-4 hover:bg-gray-100">{{ $child['name'] }}</a>
+                                                                        @endforeach
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @break
+
+                                                @case('featured_collections')
+                                                    <div class="grid grid-cols-2 gap-4">
+                                                        @foreach(json_decode($content->content, true) as $collection)
+                                                            <a href="{{ $collection['url'] }}" class="group">
+                                                                <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                                                                    <img src="{{ asset($collection['image']) }}"
+                                                                        class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                                                        alt="{{ $collection['name'] }}">
+                                                                </div>
+                                                                <p class="mt-2 text-sm font-medium">{{ $collection['name'] }}</p>
+                                                            </a>
+                                                        @endforeach
+                                                    </div>
+                                                @break
+
+                                                @case('brands')
+                                                    <div class="grid grid-cols-2 gap-3">
+                                                        @foreach(json_decode($content->content, true) as $brand)
+                                                            <a href="{{ $brand['url'] }}"
+                                                                class="p-1 hover:text-gray-700 hover:bg-gray-100 rounded-lg flex items-center justify-center">
+                                                                <img src="{{ asset($brand['logo']) }}" class="h-10 w-fit object-contain scale-150"
+                                                                    alt="{{ $brand['name'] }}">
+                                                            </a>
+                                                        @endforeach
+                                                    </div>
+                                                @break
+
+                                                @case('promo_banner')
+                                                    @php $promo = json_decode($content->content, true); @endphp
+                                                    <div class="relative -xl overflow-hidden bg-gray-100">
+                                                        <img src="{{ asset($promo['image']) }}" alt="{{ $promo['title'] }}"
+                                                            class="w-full h-full object-cover absolute inset-0">
+                                                        <div class="relative p-6 h-full flex flex-col justify-end bg-gradient-to-t from-black/60">
+                                                            <h3 class="text-2xl font-bold text-white mb-2">{{ $promo['title'] }}</h3>
+                                                            <p class="text-white/90">{{ $promo['description'] }}</p>
+                                                            <a href="{{ $promo['url'] }}"
+                                                                class="mt-4 bg-white text-gray-900 px-6 py-2 rounded-full w-fit text-sm font-medium hover:text-gray-700 hover:bg-gray-100">
+                                                                Shop Now
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                @break
+                                            @endswitch
+                                        </div>
                                     @endif
-                                </div>
                                 @endforeach
                             </div>
-                            @break
-
-                            @case('featured_collections')
-                            <div class="grid grid-cols-2 gap-4">
-                                @foreach(json_decode($content->content, true) as $collection)
-                                <a href="{{ $collection['url'] }}" class="group">
-                                    <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                                        <img src="{{ asset($collection['image']) }}"
-                                            class="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                            alt="{{ $collection['name'] }}">
-                                    </div>
-                                    <p class="mt-2 text-sm font-medium">{{ $collection['name'] }}</p>
-                                </a>
-                                @endforeach
-                            </div>
-                            @break
-
-                            @case('brands')
-                            <div class="grid grid-cols-2 gap-3">
-                                @foreach(json_decode($content->content, true) as $brand)
-                                <a href="{{ $brand['url'] }}"
-                                    class="p-1 hover:text-gray-700 hover:bg-gray-100 rounded-lg flex items-center justify-center">
-                                    <img src="{{ asset($brand['logo']) }}" class="h-10 w-fit object-contain scale-150"
-                                        alt="{{ $brand['name'] }}">
-                                </a>
-                                @endforeach
-                            </div>
-                            @break
-
-                            @case('promo_banner')
-                            <div class="relative -xl overflow-hidden bg-gray-100">
-                                @php
-                                $promo = json_decode($content->content, true);
-                                @endphp
-                                <img src="{{ asset($promo['image']) }}" alt="{{ $promo['title'] }}"
-                                    class="w-full h-full object-cover absolute inset-0">
-                                <div
-                                    class="relative p-6 h-full flex flex-col justify-end bg-gradient-to-t from-black/60">
-                                    <h3 class="text-2xl font-bold text-white mb-2">{{ $promo['title'] }}</h3>
-                                    <p class="text-white/90">{{ $promo['description'] }}</p>
-                                    <a href="{{ $promo['url'] }}"
-                                        class="mt-4 bg-white text-gray-900 px-6 py-2 rounded-full w-fit text-sm font-medium hover:text-gray-700 hover:bg-gray-100">
-                                        Shop Now
-                                    </a>
-                                </div>
-                            </div>
-                            @break
-                            @endswitch
                         </div>
-                        @endif
-                        @endforeach
                     </div>
-                </div>
-            </div>
-            @endif
+                @endif
             @endforeach
 
             <!-- Right Icons -->
             <div class="flex items-center relative">
                 <!-- Search Icon (Mobile) -->
-                <button @click="searchOpen = true" class="p-2 hover:text-gray-700 md:hidden mr-2 last:mr-0">
+                <button data-search-open class="p-2 hover:text-gray-700 md:hidden mr-2 last:mr-0">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path
                             d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z"
@@ -163,7 +145,7 @@
 
                 <!-- Search Icon (Desktop) -->
                 <div class="hidden md:flex items-center space-x-2">
-                    <button @click="searchOpen = true" class="p-2 hover:text-gray-700 mr-2 last:mr-0">
+                    <button data-search-open class="p-2 hover:text-gray-700 mr-2 last:mr-0">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path
                                 d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z"
@@ -188,8 +170,7 @@
                                 fill="white" />
                         </svg>
                         <span
-                            class="cart-counter absolute top-1 right-1 bg-red-500 text-white text-[0.65rem] text-center rounded-full h-3 w-3 flex items-center justify-center p-[6px]">{{
-                            $cartCount ?? 0 }}</span>
+                            class="cart-counter absolute top-1 right-1 bg-red-500 text-white text-[0.65rem] text-center rounded-full h-3 w-3 flex items-center justify-center p-[6px]">{{ $cartCount ?? 0 }}</span>
                     </button>
 
                     <!-- Wishlist Icon -->
@@ -201,37 +182,36 @@
                         </svg>
                     </button>
                 </div>
+
                 <!-- Mobile Menu Button -->
-                <button @click="isMobileMenuOpen = !isMobileMenuOpen" class="md:hidden p-2 hover:text-gray-700">
+                <button data-mobile-menu-toggle class="md:hidden p-2 hover:text-gray-700">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
             </div>
-
         </div>
     </div>
 
     <!-- Mobile Menu -->
-    <div class="md:hidden" x-show="isMobileMenuOpen" @click.away="isMobileMenuOpen = false" x-cloak>
+    <div id="mobile-menu" class="hidden md:hidden">
         <div class="px-2 pt-2 pb-3 space-y-1">
             @foreach($navigationMenus as $menu)
-            <a href="{{ $menu->is_mega_menu ? '#' : ($menu->items->first()->link ?? '#') }}"
-                class="block px-3 py-2 hover:text-gray-700 hover:bg-gray-100 uppercase {{ $menu->slug === 'sale' ? 'text-red-600' : '' }}">
-                {{ $menu->name }}
-            </a>
-
-            @if($menu->is_mega_menu)
-            <!-- Mobile submenu items for mega menus -->
-            <div class="pl-6 space-y-1">
-                @foreach($menu->items as $item)
-                <a href="{{ $item->link }}" class="block px-3 py-2 text-sm hover:text-gray-700 hover:bg-gray-100">
-                    {{ $item->title }}
+                <a href="{{ $menu->is_mega_menu ? '#' : ($menu->items->first()->link ?? '#') }}"
+                    class="block px-3 py-2 hover:text-gray-700 hover:bg-gray-100 uppercase {{ $menu->slug === 'sale' ? 'text-red-600' : '' }}">
+                    {{ $menu->name }}
                 </a>
-                @endforeach
-            </div>
-            @endif
+
+                @if($menu->is_mega_menu)
+                    <div class="pl-6 space-y-1">
+                        @foreach($menu->items as $item)
+                            <a href="{{ $item->link }}" class="block px-3 py-2 text-sm hover:text-gray-700 hover:bg-gray-100">
+                                {{ $item->title }}
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
             @endforeach
         </div>
     </div>

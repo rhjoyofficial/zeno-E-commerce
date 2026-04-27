@@ -39,8 +39,16 @@
                         class="flex justify-center items-center gap-2 px-6 py-4 tracking-[2px] bg-white text-black text-[16px] font-bold uppercase cursor-pointer">
                         Buy
                     </button>
-                    <button data-product-id="{{ $id }}"
-                        class="add-to-cart flex justify-center items-center gap-2 px-6 py-4 tracking-[2px] bg-white text-black text-[16px] font-bold uppercase">
+                    <button
+                        class="add-to-cart flex justify-center items-center gap-2 px-6 py-4 tracking-[2px] bg-white text-black text-[16px] font-bold uppercase"
+                        data-product-id="{{ $id }}"
+                        data-title="{{ addslashes($title) }}"
+                        data-description="{{ addslashes(Str::limit($description ?? '', 80)) }}"
+                        data-price="{{ $price }}"
+                        data-discount-price="{{ $discountPrice ?? '' }}"
+                        data-has-variants="{{ $hasVariants ? 'true' : 'false' }}"
+                        data-images='@json($images ?? [])'
+                        data-variants='@json($variants ?? [])'>
                         Add Cart
                     </button>
                 @else
