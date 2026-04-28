@@ -102,12 +102,12 @@
                     <div class="flex items-center justify-between">
                         <div>
                             @if($product->discount_price > 0)
-                            <span class="text-lg font-bold text-gray-900">${{ number_format($product->discount_price, 2)
+                            <span class="text-lg font-bold text-gray-900">{{ config('app.currency_symbol') }}{{ number_format($product->discount_price, 2)
                                 }}</span>
-                            <span class="text-sm text-gray-500 line-through ml-2">${{ number_format($product->price, 2)
+                            <span class="text-sm text-gray-500 line-through ml-2">{{ config('app.currency_symbol') }}{{ number_format($product->price, 2)
                                 }}</span>
                             @else
-                            <span class="text-lg font-bold text-gray-900">${{ number_format($product->price, 2)
+                            <span class="text-lg font-bold text-gray-900">{{ config('app.currency_symbol') }}{{ number_format($product->price, 2)
                                 }}</span>
                             @endif
                         </div>

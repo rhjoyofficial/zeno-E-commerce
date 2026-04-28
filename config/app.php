@@ -55,6 +55,10 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'currency_symbol' => env('CURRENCY_SYMBOL', '৳'),
+
+    'vat_rate' => env('VAT_RATE', 0.05),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

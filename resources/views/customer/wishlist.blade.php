@@ -35,10 +35,10 @@
                             <p class="font-semibold text-gray-900 text-sm">{{ $wish->product->title }}</p>
                             <p class="text-gray-700 text-sm mt-1">
                                 @if($wish->product->discount_price)
-                                    <span class="line-through text-gray-400">${{ number_format($wish->product->price, 2) }}</span>
-                                    <span class="ml-1 font-bold">${{ number_format($wish->product->discount_price, 2) }}</span>
+                                    <span class="line-through text-gray-400">{{ config('app.currency_symbol') }}{{ number_format($wish->product->price, 2) }}</span>
+                                    <span class="ml-1 font-bold">{{ config('app.currency_symbol') }}{{ number_format($wish->product->discount_price, 2) }}</span>
                                 @else
-                                    ${{ number_format($wish->product->price, 2) }}
+                                    {{ config('app.currency_symbol') }}{{ number_format($wish->product->price, 2) }}
                                 @endif
                             </p>
                             <div class="mt-auto pt-4 flex gap-2">

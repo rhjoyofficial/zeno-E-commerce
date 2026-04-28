@@ -27,29 +27,6 @@
     </div>
 </section>
 
-<script>
-    function filterProducts(category, event) {
-        // Remove active class from all buttons
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.remove('active', 'bg-black', 'text-white');
-            btn.classList.add('bg-gray-100', 'text-black');
-        });
-
-        // Add active class to clicked button
-        event.target.classList.add('active', 'bg-black', 'text-white');
-        event.target.classList.remove('bg-gray-100', 'text-black');
-
-        // Get all product cards
-        const products = document.querySelectorAll('[data-categories]');
-
-        // Filter products
-        products.forEach(product => {
-            const categories = product.dataset.categories.split(' ');
-            if (category === 'all' || categories.includes(category)) {
-                product.classList.remove('hidden');
-            } else {
-                product.classList.add('hidden');
-            }
-        });
-    }
-</script>
+@push('scripts')
+@include('frontend.partials.filter-script')
+@endpush

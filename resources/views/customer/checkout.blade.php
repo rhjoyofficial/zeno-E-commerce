@@ -182,18 +182,18 @@
                 <div class="space-y-3 my-4">
                     <div class="flex justify-between">
                         <span>Order value</span>
-                        <span class="font-semibold">${{ number_format($subtotal, 2) }}</span>
+                        <span class="font-semibold">{{ config('app.currency_symbol') }}{{ number_format($subtotal, 2) }}</span>
                     </div>
                     @if ($discountTotal)
                     <div class="flex justify-between">
                         <span>Discount</span>
-                        <span class="font-semibold text-green-600">- ${{ number_format($discountTotal, 2) }}</span>
+                        <span class="font-semibold text-green-600">- {{ config('app.currency_symbol') }}{{ number_format($discountTotal, 2) }}</span>
                     </div>
                     @endif
 
                     <div class="flex justify-between">
                         <span class="uppercase">VAT 5%</span>
-                        <span class="font-semibold">${{ number_format($taxAmount, 2) }}</span>
+                        <span class="font-semibold">{{ config('app.currency_symbol') }}{{ number_format($taxAmount, 2) }}</span>
                     </div>
 
 
@@ -281,7 +281,7 @@
                 <!-- Total Price -->
                 <div class="flex justify-between font-semibold border-t-2 border-gray-200 pt-4 text-lg">
                     <span>Total Price</span>
-                    <span>${{ number_format($grandTotal, 2) }}</span>
+                    <span>{{ config('app.currency_symbol') }}{{ number_format($grandTotal, 2) }}</span>
                 </div>
 
 
@@ -321,11 +321,11 @@
                                     <p class="text-sm text-gray-800 mb-1">SIZE: {{ $cartItem->variant->size->name }}</p>
                                     @endif
                                     <p class="text-sm text-gray-800 mb-1">QTY: {{ $cartItem->qty }}</p>
-                                    <p class="text-sm text-gray-800">PRICE: ${{ number_format($cartItem->variant->discount_price ?? $cartItem->variant->price, 2) }}</p>
+                                    <p class="text-sm text-gray-800">PRICE: {{ config('app.currency_symbol') }}{{ number_format($cartItem->variant->discount_price ?? $cartItem->variant->price, 2) }}</p>
                                     @else
                                     <p class="text-sm text-gray-800 mb-1">QTY: {{ $cartItem->qty }}</p>
                                     <p class="text-sm text-gray-800">
-                                        PRICE: ${{ number_format($cartItem->product->discount_price ?? $cartItem->product->price, 2) }}
+                                        PRICE: {{ config('app.currency_symbol') }}{{ number_format($cartItem->product->discount_price ?? $cartItem->product->price, 2) }}
                                     </p>
                                     @endif
                                 </div>

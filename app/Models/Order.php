@@ -12,6 +12,7 @@ class Order extends Model
     use HasFactory, SoftDeletes;
     protected $fillable = [
         'order_number',
+        'invoice_number',
         'status',
         'subtotal',
         'discount_amount',
@@ -106,5 +107,22 @@ class Order extends Model
     public function getFormattedInvoiceNumberAttribute()
     {
         return $this->invoice_number ? 'INV-' . str_pad($this->invoice_number, 5, '0', STR_PAD_LEFT) : null;
+    }
+
+    private const TRANSITIONS = [
+        'pending'             => ['confirmed', 'cancelled', 'on_hold'],
+        'confirmed'           => ['processing', 'cancelled', 'on_hold'],
+        'processing'          => ['shipped', 'cancelled', 'on_hold'],
+        'shipped'             => ['delivered', 'on_hold'],
+        'delivered'           => ['refunded', 'partially_refunded'],
+        'partially_refunded'  => ['refunded'],
+        'on_hold'             => ['confirmed', 'cancelled'],
+        'cancelled'           => [],
+        'refunded'            => [],
+    ];
+
+    public function canTransitionTo(string $newStatus): bool
+    {
+        return in_array($newStatus, self::TRANSITIONS[$this->status] ?? [], true);
     }
 }

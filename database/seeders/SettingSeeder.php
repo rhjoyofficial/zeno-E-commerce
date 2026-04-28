@@ -14,7 +14,7 @@ class SettingSeeder extends Seeder
             ['key' => 'default_currency', 'value' => 'BDT', 'group' => 'commerce'],
             ['key' => 'free_shipping_minimum', 'value' => '5000', 'group' => 'commerce'],
             ['key' => 'support_phone', 'value' => '+8801710000000', 'group' => 'support'],
-            ['key' => 'support_email', 'value' => 'care@zenofashion.test', 'group' => 'support'],
+            ['key' => 'support_email', 'value' => 'care@zeno.com', 'group' => 'support'],
         ] as $setting) {
             Setting::set($setting['key'], $setting['value'], $setting['group']);
         }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\HomeSection;
 use App\Models\Product;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class HomeSectionService
 {
@@ -13,10 +14,12 @@ class HomeSectionService
      */
     public function getActiveSections(): Collection
     {
-        return HomeSection::active()
-            ->orderBy('order')
-            ->with(['items', 'category'])
-            ->get();
+        return Cache::remember('home_sections_active', 3600, fn () =>
+            HomeSection::active()
+                ->orderBy('order')
+                ->with(['items', 'category'])
+                ->get()
+        );
     }
 
     /**
@@ -25,23 +28,27 @@ class HomeSectionService
      */
     public function getProductsForSection(HomeSection $section, int $limit = 8): Collection
     {
-        if ($section->type === 'new_arrivals') {
-            return Product::with(['variants', 'primaryImage', 'category'])
-                ->active()
-                ->latest()
-                ->take($limit)
-                ->get();
-        }
+        return Cache::remember("section_products_{$section->id}", 3600, function () use ($section, $limit) {
+            $with = ['activeVariants.color', 'activeVariants.size', 'primaryImage', 'category'];
 
-        if ($section->type === 'fashion' && $section->category) {
-            $categoryIds = $section->category->getDescendantIds();
-            return Product::with(['variants', 'primaryImage', 'category'])
-                ->whereIn('category_id', $categoryIds)
-                ->active()
-                ->take($limit)
-                ->get();
-        }
+            if ($section->type === 'new_arrivals') {
+                return Product::with($with)
+                    ->active()
+                    ->latest()
+                    ->take($limit)
+                    ->get();
+            }
 
-        return collect();
+            if ($section->type === 'fashion' && $section->category) {
+                $categoryIds = $section->category->getDescendantIds();
+                return Product::with($with)
+                    ->whereIn('category_id', $categoryIds)
+                    ->active()
+                    ->take($limit)
+                    ->get();
+            }
+
+            return collect();
+        });
     }
 }

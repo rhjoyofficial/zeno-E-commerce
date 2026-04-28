@@ -17,7 +17,7 @@ class CartService
     public function addToCart(array $data): array
     {
         $product = Product::findOrFail($data['product_id']);
-        $price = $product->price;
+        $price = $product->final_price;
 
         if (!empty($data['variant_id'])) {
             $variant = ProductVariant::findOrFail($data['variant_id']);
@@ -26,7 +26,7 @@ class CartService
                 return ['success' => false, 'message' => 'The selected product variant is not available.'];
             }
 
-            $price = $variant->price;
+            $price = $variant->final_price;
         }
 
         $data['price'] = $price;
@@ -262,7 +262,7 @@ class CartService
 
         return [
             'id'             => $variant->id,
-            'price'          => $variant->price,
+            'price'          => $variant->final_price,
             'stock_quantity' => $variant->stock_quantity,
             'sku'            => $variant->sku,
             'color'          => $variant->color?->name,

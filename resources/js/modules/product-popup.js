@@ -53,15 +53,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const text = data.short_description || '';
             description.textContent = text.length > maxChars ? text.slice(0, maxChars) + '…' : text;
 
+            const sym = (window.appConfig && window.appConfig.currencySymbol) ? window.appConfig.currencySymbol : '৳';
+            const fmt = (n) => sym + parseFloat(n).toFixed(2);
+
             price.innerHTML = '';
             if (data.discount_price != null) {
-                price.textContent = '$' + data.discount_price;
+                price.textContent = fmt(data.discount_price);
                 const original = document.createElement('span');
                 original.className = 'ml-2 text-gray-700 text-sm line-through';
-                original.textContent = '$' + data.price;
+                original.textContent = fmt(data.price);
                 price.appendChild(original);
             } else {
-                price.textContent = '$' + data.price;
+                price.textContent = fmt(data.price);
             }
 
             thumbnailsContainer.innerHTML = '';
@@ -167,7 +170,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return colorOk && sizeOk;
         });
         selectedVariantId = match ? match.id : null;
-        if (match?.price) price.textContent = match.price + ' $';
+        if (match?.price) {
+            const sym2 = (window.appConfig && window.appConfig.currencySymbol) ? window.appConfig.currencySymbol : '৳';
+            price.textContent = sym2 + parseFloat(match.price).toFixed(2);
+        }
     }
 
     function closePopup() {

@@ -26,16 +26,8 @@ class WishlistController extends Controller
             'product_id' => 'required|exists:products,id',
         ]);
 
-        $alreadyExists = ProductWish::where('user_id', Auth::id())
-            ->where('product_id', $request->product_id)
-            ->exists();
-
-        if (!$alreadyExists) {
-            ProductWish::create([
-                'user_id'    => Auth::id(),
-                'product_id' => $request->product_id,
-            ]);
-        }
+        $wish          = ProductWish::firstOrCreate(['user_id' => Auth::id(), 'product_id' => $request->product_id]);
+        $alreadyExists = !$wish->wasRecentlyCreated;
 
         if ($request->wantsJson()) {
             return response()->json([

@@ -18,7 +18,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-500">Total Revenue</p>
-                        <p class="text-2xl font-semibold text-gray-800">${{ number_format($totalRevenue, 2) }}</p>
+                        <p class="text-2xl font-semibold text-gray-800">{{ config('app.currency_symbol') }}{{ number_format($totalRevenue, 2) }}</p>
                     </div>
                 </div>
             </div>
@@ -173,7 +173,7 @@
                             <p class="text-xs text-gray-500">{{ number_format($item->total_sold) }} sold</p>
                         </div>
                         <div class="ml-auto text-right">
-                            <p class="text-sm font-medium text-gray-900">${{ number_format($item->total_revenue, 2) }}</p>
+                            <p class="text-sm font-medium text-gray-900">{{ config('app.currency_symbol') }}{{ number_format($item->total_revenue, 2) }}</p>
                         </div>
                     </div>
                 </div>

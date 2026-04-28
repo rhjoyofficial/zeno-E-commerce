@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class Category extends Model
 {
@@ -50,25 +51,31 @@ class Category extends Model
 
     public function getDescendantIds(): array
     {
-        // Load all categories once per request to avoid N+1
-        if (static::$categoryParentMap === null) {
-            static::$categoryParentMap = static::pluck('parent_id', 'id')->all();
-        }
+        $version = Cache::get('categories_version', 1);
 
-        $ids = [];
-        $queue = [$this->id];
-
-        while (!empty($queue)) {
-            $currentId = array_shift($queue);
-            $ids[] = $currentId;
-            foreach (static::$categoryParentMap as $childId => $parentId) {
-                if ($parentId === $currentId) {
-                    $queue[] = $childId;
-                }
+        return Cache::remember("category_descendants_{$this->id}_v{$version}", 3600, function () {
+            if (static::$categoryParentMap === null) {
+                static::$categoryParentMap = static::pluck('parent_id', 'id')->all();
             }
-        }
 
-        return $ids;
+            $ids = [];
+            $queue = [$this->id];
+            $maxIterations = count(static::$categoryParentMap) + 1;
+            $iterations = 0;
+
+            while (!empty($queue) && $iterations < $maxIterations) {
+                $currentId = array_shift($queue);
+                $ids[] = $currentId;
+                foreach (static::$categoryParentMap as $childId => $parentId) {
+                    if ($parentId === $currentId && !in_array($childId, $ids, true)) {
+                        $queue[] = $childId;
+                    }
+                }
+                $iterations++;
+            }
+
+            return $ids;
+        });
     }
 
     protected static function booted(): void
@@ -82,9 +89,11 @@ class Category extends Model
         });
         static::saved(function () {
             static::$categoryParentMap = null;
+            Cache::increment('categories_version');
         });
         static::deleted(function () {
             static::$categoryParentMap = null;
+            Cache::increment('categories_version');
         });
     }
 }

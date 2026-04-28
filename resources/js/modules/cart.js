@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateCartTotals() {
         let orderValue    = 0;
         let totalDiscount = 0;
-        const vatRate     = 0.05;
+        const vatRate     = (window.appConfig && window.appConfig.vatRate != null) ? window.appConfig.vatRate : 0.05;
+        const sym         = (window.appConfig && window.appConfig.currencySymbol) ? window.appConfig.currencySymbol : '৳';
 
         document.querySelectorAll('.cart-item-row').forEach((row) => {
             const checkbox = row.querySelector('.item-checkbox');
@@ -30,13 +31,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const total = orderValue + vat;
         const fmt   = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        if (orderValueTotalEl) orderValueTotalEl.textContent = `$${fmt(orderValue)}`;
-        if (vatAmountEl)       vatAmountEl.textContent       = `$${fmt(vat)}`;
-        if (totalPriceEl)      totalPriceEl.textContent      = `$${fmt(total)}`;
+        if (orderValueTotalEl) orderValueTotalEl.textContent = `${sym}${fmt(orderValue)}`;
+        if (vatAmountEl)       vatAmountEl.textContent       = `${sym}${fmt(vat)}`;
+        if (totalPriceEl)      totalPriceEl.textContent      = `${sym}${fmt(total)}`;
 
         if (totalDiscountEl && parentDiscount) {
             if (totalDiscount > 0) {
-                totalDiscountEl.textContent = `- $${fmt(totalDiscount)}`;
+                totalDiscountEl.textContent = `- ${sym}${fmt(totalDiscount)}`;
                 parentDiscount.classList.remove('hidden');
             } else {
                 parentDiscount.classList.add('hidden');

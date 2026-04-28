@@ -27,7 +27,7 @@
             </svg>
         </button>
 
-        <div class="relative overflow-hidden w-full h-[290px] sm:h-[310px] md:h-[350px]">
+        <div class="relative overflow-hidden w-full h-[290px] sm:h-[310px] md:h-[350px] aspect-square">
             <img src="{{ asset($image) }}" alt="{{ $title }}" class="!w-full h-full object-cover" />
         </div>
 
@@ -41,14 +41,11 @@
                     </button>
                     <button
                         class="add-to-cart flex justify-center items-center gap-2 px-6 py-4 tracking-[2px] bg-white text-black text-[16px] font-bold uppercase"
-                        data-product-id="{{ $id }}"
-                        data-title="{{ addslashes($title) }}"
+                        data-product-id="{{ $id }}" data-title="{{ addslashes($title) }}"
                         data-description="{{ addslashes(Str::limit($description ?? '', 80)) }}"
-                        data-price="{{ $price }}"
-                        data-discount-price="{{ $discountPrice ?? '' }}"
+                        data-price="{{ $price }}" data-discount-price="{{ $discountPrice ?? '' }}"
                         data-has-variants="{{ $hasVariants ? 'true' : 'false' }}"
-                        data-images='@json($images ?? [])'
-                        data-variants='@json($variants ?? [])'>
+                        data-images='@json($images ?? [])' data-variants='@json($variants ?? [])'>
                         Add Cart
                     </button>
                 @else
@@ -65,11 +62,11 @@
         <p class="text-xl sm:text-lg font-semibold tracking-tight">{{ $title }}</p>
         @if (isset($discountPrice))
             <p class="text-base sm:text-xl font-semibold tracking-tight">
-                <span class="text-red-500 text-base line-through">${{ number_format($price, 2) }}</span>
-                <span class="ml-2">${{ number_format($discountPrice, 2) }}</span>
+                <span class="text-red-500 text-base line-through">{{ config('app.currency_symbol') }}{{ number_format($price, 2) }}</span>
+                <span class="ml-2">{{ config('app.currency_symbol') }}{{ number_format($discountPrice, 2) }}</span>
             </p>
         @else
-            <p class="text-base sm:text-xl font-semibold tracking-tight">${{ number_format($price, 2) }}</p>
+            <p class="text-base sm:text-xl font-semibold tracking-tight">{{ config('app.currency_symbol') }}{{ number_format($price, 2) }}</p>
         @endif
     </div>
 </div>

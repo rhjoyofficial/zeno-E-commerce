@@ -7,6 +7,7 @@ use App\Models\NavigationMenu;
 use App\Models\NavigationMenuItem;
 use App\Models\MegaMenuContent;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class NavigationController extends Controller
 {
@@ -33,6 +34,7 @@ class NavigationController extends Controller
         ]);
 
         $menu = NavigationMenu::create($validated);
+        $this->bustNavCache();
 
         return redirect()->route('admin.navigation.edit', $menu->id)
             ->with('success', 'Navigation menu created successfully.');
@@ -58,6 +60,7 @@ class NavigationController extends Controller
         ]);
 
         $menu->update($validated);
+        $this->bustNavCache();
 
         return redirect()->back()->with('success', 'Navigation menu updated successfully.');
     }
@@ -66,6 +69,7 @@ class NavigationController extends Controller
     {
         $menu = NavigationMenu::findOrFail($id);
         $menu->delete();
+        $this->bustNavCache();
 
         return redirect()->route('admin.navigation.index')
             ->with('success', 'Navigation menu deleted successfully.');
@@ -85,6 +89,7 @@ class NavigationController extends Controller
         $validated['navigation_menu_id'] = $menuId;
 
         NavigationMenuItem::create($validated);
+        $this->bustNavCache();
 
         return redirect()->back()->with('success', 'Menu item added successfully.');
     }
@@ -103,6 +108,7 @@ class NavigationController extends Controller
         ]);
 
         $item->update($validated);
+        $this->bustNavCache();
 
         return redirect()->back()->with('success', 'Menu item updated successfully.');
     }
@@ -111,6 +117,7 @@ class NavigationController extends Controller
     {
         $item = NavigationMenuItem::where('navigation_menu_id', $menuId)->findOrFail($itemId);
         $item->delete();
+        $this->bustNavCache();
 
         return redirect()->back()->with('success', 'Menu item deleted successfully.');
     }
@@ -129,6 +136,7 @@ class NavigationController extends Controller
         $validated['navigation_menu_id'] = $menuId;
 
         MegaMenuContent::create($validated);
+        $this->bustNavCache();
 
         return redirect()->back()->with('success', 'Mega menu content added successfully.');
     }
@@ -147,6 +155,7 @@ class NavigationController extends Controller
         ]);
 
         $content->update($validated);
+        $this->bustNavCache();
 
         return redirect()->back()->with('success', 'Mega menu content updated successfully.');
     }
@@ -155,7 +164,13 @@ class NavigationController extends Controller
     {
         $content = MegaMenuContent::where('navigation_menu_id', $menuId)->findOrFail($contentId);
         $content->delete();
+        $this->bustNavCache();
 
         return redirect()->back()->with('success', 'Mega menu content deleted successfully.');
+    }
+
+    private function bustNavCache(): void
+    {
+        Cache::forget('navigation_menus');
     }
 }

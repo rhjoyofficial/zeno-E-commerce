@@ -3,44 +3,100 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Product;
+use App\Services\ProductCardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function __construct(private ProductCardService $productCardService) {}
+
+    public function index(Request $request)
     {
-        $products = Product::active()
+        $topCategories  = Category::whereNull('parent_id')->active()->get();
+        $activeCategory = null;
+
+        $query = Product::active()
             ->with(['primaryImage', 'images', 'category', 'activeVariants.color', 'activeVariants.size'])
-            ->latest()
-            ->paginate(12);
+            ->latest();
+
+        if ($request->filled('category')) {
+            $activeCategory = Category::find((int) $request->category);
+
+            if ($activeCategory) {
+                $ids = $activeCategory->getDescendantIds();
+                $query->whereIn('category_id', $ids);
+            }
+        }
+
+        $products = $query->paginate(12)->withQueryString();
 
         $products->setCollection(
-            collect($this->formatForCard($products->items()))
+            collect($this->productCardService->format($products->items()))
         );
 
         return view('frontend.product-list', [
-            'products' => $products,
+            'products'       => $products,
+            'topCategories'  => $topCategories,
+            'activeCategory' => $activeCategory,
         ]);
     }
 
     public function show(Product $product)
     {
-        $product->load(['images', 'category', 'activeVariants.color', 'activeVariants.size']);
+        $product->load(['images', 'category', 'details', 'activeVariants.color', 'activeVariants.size']);
+
+        // Build image list for the slider
+        $images = $product->images->map(fn($img) => [
+            'url'        => Storage::url($img->image_path),
+            'is_primary' => (bool) $img->is_primary,
+            'variant_id' => $img->variant_id,
+        ])->sortByDesc('is_primary')->values()->all();
+
+        if (empty($images)) {
+            $images = [['url' => asset('images/products/default.jpg'), 'is_primary' => true, 'variant_id' => null]];
+        }
+
+        // Unique colors and sizes from active variants
+        $variantColors = $product->activeVariants
+            ->filter(fn($v) => $v->color)
+            ->unique('color_id')
+            ->map(fn($v) => ['id' => $v->color_id, 'name' => $v->color->name, 'hex' => $v->color->hex_code])
+            ->values()->all();
+
+        $variantSizes = $product->activeVariants
+            ->filter(fn($v) => $v->size)
+            ->unique('size_id')
+            ->map(fn($v) => ['id' => $v->size_id, 'name' => $v->size->name])
+            ->values()->all();
+
+        // Full variant map for JS matching
+        $variantsForJs = $product->activeVariants->map(fn($v) => [
+            'id'             => $v->id,
+            'color_id'       => $v->color_id,
+            'size_id'        => $v->size_id,
+            'price'          => (float) $v->price,
+            'final_price'    => (float) $v->final_price,
+            'stock_quantity' => $v->stock_quantity,
+            'sku'            => $v->sku,
+        ])->values()->all();
 
         $related = Product::active()
             ->where('id', '!=', $product->id)
             ->when($product->category_id, fn($q) => $q->where('category_id', $product->category_id))
-            ->with(['primaryImage', 'images', 'category', 'activeVariants.color', 'activeVariants.size'])
+            ->with(['primaryImage', 'category', 'activeVariants.color', 'activeVariants.size'])
             ->limit(4)
             ->get();
 
-        $formattedRelated = $this->formatForCard($related);
-
-        return view('frontend.product-list', [
-            'product' => $product,
-            'products' => $formattedRelated,
+        return view('frontend.product-details', [
+            'product'       => $product,
+            'images'        => $images,
+            'variantColors' => $variantColors,
+            'variantSizes'  => $variantSizes,
+            'variantsForJs' => $variantsForJs,
+            'products'      => $this->productCardService->format($related),
         ]);
     }
 
@@ -101,35 +157,4 @@ class ProductController extends Controller
         }
     }
 
-    private function formatForCard($products): array
-    {
-        return collect($products)->map(fn($product) => [
-            'id'            => $product->id,
-            'image'         => $product->primaryImage?->image_path ?? 'images/products/default.jpg',
-            'title'         => $product->title,
-            'description'   => $product->short_description ?? '',
-            'price'         => $product->price,
-            'discountPrice' => $product->discount_price ?: null,
-            'badge'         => $product->discount_price ? 'Sale' : 'New',
-            'stock'         => $product->stock_quantity > 0,
-            'hasVariants'   => (bool) $product->has_variants,
-            'categories'    => $product->category ? [$product->category->category_name] : [],
-            'images'        => ($product->images ?? collect())->map(fn($img) => [
-                'path'       => Storage::url($img->image_path),
-                'is_primary' => (bool) $img->is_primary,
-            ])->values()->all(),
-            'variants'      => $product->has_variants
-                ? ($product->activeVariants ?? collect())->map(fn($v) => [
-                    'id'             => $v->id,
-                    'color_id'       => $v->color_id,
-                    'color_name'     => $v->color?->name,
-                    'color_hex'      => $v->color?->hex_code,
-                    'size_id'        => $v->size_id,
-                    'size_name'      => $v->size?->name,
-                    'price'          => $v->price,
-                    'stock_quantity' => $v->stock_quantity,
-                ])->values()->all()
-                : [],
-        ])->all();
-    }
 }

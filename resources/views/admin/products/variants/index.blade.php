@@ -80,7 +80,7 @@
                                             {{ $variant->size->name ?? 'N/A' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-base text-gray-900">
-                                            {{ number_format($variant->price, 2) }}৳
+                                            {{ config('app.currency_symbol') }}{{ number_format($variant->price, 2) }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <button type="button" class="w-full text-left focus:outline-none"

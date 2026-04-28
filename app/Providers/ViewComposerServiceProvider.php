@@ -11,9 +11,9 @@ class ViewComposerServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // Bind only to the frontend layout — fires once per frontend page request,
-        // not on every admin view, include, or partial.
-        View::composer('layouts.app', function ($view) {
+        // Bind to the navbar partial — fires only when the navbar renders,
+        // not on admin views or any view that bypasses the frontend layout.
+        View::composer('frontend.navbar', function ($view) {
             $menus = cache()->remember('navigation_menus', 3600, function () {
                 return NavigationMenu::with(['items.children', 'megaMenuContents'])
                     ->where('status', 'active')

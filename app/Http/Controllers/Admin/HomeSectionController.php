@@ -10,6 +10,7 @@ use App\Services\ImageService;
 use Illuminate\Http\Request;
 use App\Http\Requests\HomeSectionRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class HomeSectionController extends Controller
@@ -165,6 +166,7 @@ class HomeSectionController extends Controller
             }
 
             DB::commit();
+            Cache::forget("section_products_{$homeSection->id}");
 
             return redirect()->route('admin.home-sections.index')
                 ->with('success', 'Home section updated successfully.');
@@ -180,10 +182,12 @@ class HomeSectionController extends Controller
 
     public function destroy(HomeSection $homeSection)
     {
+        $id = $homeSection->id;
         $this->imageService->delete($homeSection->banner_image);
         $homeSection->items()->each(fn($item) => $this->imageService->delete($item->image));
         $homeSection->items()->delete();
         $homeSection->delete();
+        Cache::forget("section_products_{$id}");
         return redirect()->route('admin.home-sections.index')->with('success', 'Section deleted.');
     }
 
@@ -193,6 +197,7 @@ class HomeSectionController extends Controller
             $homeSection->update([
                 'status' => $homeSection->status === 'active' ? 'inactive' : 'active'
             ]);
+            Cache::forget("section_products_{$homeSection->id}");
 
             return response()->json([
                 'success' => true,

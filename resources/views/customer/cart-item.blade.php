@@ -82,21 +82,21 @@
                                                     @if ($discountPrice)
                                                         <p class="text-base text-gray-800">
                                                             <span
-                                                                class="text-black font-medium text-lg">${{ number_format($discountPrice, 2) }}</span>
+                                                                class="text-black font-medium text-lg">{{ config('app.currency_symbol') }}{{ number_format($discountPrice, 2) }}</span>
                                                             <span
-                                                                class="text-[#E71046] line-through mr-2 text-sm">${{ number_format($realPrice, 2) }}</span>
+                                                                class="text-[#E71046] line-through mr-2 text-sm">{{ config('app.currency_symbol') }}{{ number_format($realPrice, 2) }}</span>
                                                         </p>
                                                     @else
                                                         <p class="text-base text-gray-800">
                                                             <span
-                                                                class="text-black font-medium text-lg">${{ number_format($realPrice, 2) }}</span>
+                                                                class="text-black font-medium text-lg">{{ config('app.currency_symbol') }}{{ number_format($realPrice, 2) }}</span>
                                                         </p>
                                                     @endif
                                                 </div>
 
                                                 @if ($discountPrice)
                                                     <p class="text-xs text-gray-600 mt-1">
-                                                        YOU SAVE ${{ number_format($youSave, 2) }}
+                                                        YOU SAVE {{ config('app.currency_symbol') }}{{ number_format($youSave, 2) }}
                                                         ({{ round($savePercentage) }}%)
                                                     </p>
                                                 @endif
@@ -165,11 +165,11 @@
                             </div>
                             <div class="flex justify-between parentDiscount">
                                 <span>Discount</span>
-                                <span class="font-semibold text-green-600" id="total-discount">$0.00</span>
+                                <span class="font-semibold text-green-600" id="total-discount">{{ config('app.currency_symbol') }}0.00</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="uppercase">VAT 5%</span>
-                                <span class="font-semibold" id="vat-amount">$0.00</span>
+                                <span class="uppercase">VAT {{ round(config('app.vat_rate', 0.05) * 100) }}%</span>
+                                <span class="font-semibold" id="vat-amount">{{ config('app.currency_symbol') }}0.00</span>
                             </div>
 
                             <div class="flex justify-between items-center">

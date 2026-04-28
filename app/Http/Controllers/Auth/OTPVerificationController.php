@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\CartService;
 use App\Services\OtpService;
 use App\Events\UserRegistered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
 class OTPVerificationController extends Controller
 {
@@ -84,6 +86,11 @@ class OTPVerificationController extends Controller
         try {
             $this->otpService->verifyOtp($user, $request->otp, $request->token);
             Auth::login($user, $request->boolean('remember'));
+
+            if (Session::has('cart')) {
+                app(CartService::class)->syncCart();
+            }
+
             event(new UserRegistered($user));
             return redirect()->route('home')->with('success', 'Registration successful! Welcome!');
         } catch (\Exception $e) {

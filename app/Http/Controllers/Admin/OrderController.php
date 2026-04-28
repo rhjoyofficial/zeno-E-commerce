@@ -64,6 +64,11 @@ class OrderController extends Controller
             'tracking_url'   => 'nullable|url|max:500',
         ]);
 
+        if (isset($validated['status']) && !$order->canTransitionTo($validated['status'])) {
+            return redirect()->back()
+                ->with('error', "Cannot change order status from '{$order->status}' to '{$validated['status']}'.");
+        }
+
         $order->update($validated);
 
         return redirect()->route('admin.orders.show', $order)
@@ -86,6 +91,14 @@ class OrderController extends Controller
         $validated = $request->validate([
             'status' => 'required|in:' . implode(',', self::VALID_STATUSES),
         ]);
+
+        if (!$order->canTransitionTo($validated['status'])) {
+            $error = "Cannot change order status from '{$order->status}' to '{$validated['status']}'.";
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $error], 422);
+            }
+            return redirect()->back()->with('error', $error);
+        }
 
         try {
             $order->update(['status' => $validated['status']]);

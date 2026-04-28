@@ -23,6 +23,7 @@ use App\Http\Controllers\Customer\ProductController as CustomerProductController
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\HomeSectionController;
 use App\Http\Controllers\Admin\NavigationController as AdminNavigationController;
@@ -216,6 +217,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Reports
     Route::resource('reports', ReportController::class);
 
+    // Coupons
+    Route::resource('coupons', CouponController::class)->except(['create', 'edit', 'show']);
+
     // Settings
     Route::resource('settings', SettingController::class);
 
@@ -243,7 +247,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 // ==================== MISC ROUTES ====================
 
 Route::fallback(function () {
-    if (Gate::allows('isAdmin')) {
+    if (Auth::check() && Gate::allows('isAdmin')) {
         return redirect()->route('admin.dashboard')->with('info', 'The page you were looking for does not exist. You have been redirected to the admin dashboard.');
     }
     abort(404);

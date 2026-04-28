@@ -179,7 +179,7 @@ class CheckoutService
             $order = Order::create([
                 'user_id'             => $userId,
                 'guest_session_id'    => $sessionId,
-                'order_number'        => 'ORD-' . Str::upper(Str::random(8)),
+                'order_number'        => 'ORD-' . str_pad($invoiceNumber, 6, '0', STR_PAD_LEFT),
                 'invoice_number'      => $invoiceNumber,
                 'customer_email'      => $userId ? Auth::user()->email : ($validatedData['email'] ?? null),
                 'customer_phone'      => $validatedData['phone'],

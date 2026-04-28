@@ -52,7 +52,9 @@
                 getVariantPrice:  "{{ route('cart.get-variant-price') }}",
                 home:             "{{ route('home') }}",
             },
-            csrfToken: "{{ csrf_token() }}",
+            csrfToken:      "{{ csrf_token() }}",
+            vatRate:        {{ config('app.vat_rate', 0.05) }},
+            currencySymbol: "{{ config('app.currency_symbol', '৳') }}",
         };
     </script>
 
