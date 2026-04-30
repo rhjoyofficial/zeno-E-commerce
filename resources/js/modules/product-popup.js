@@ -170,9 +170,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return colorOk && sizeOk;
         });
         selectedVariantId = match ? match.id : null;
-        if (match?.price) {
-            const sym2 = (window.appConfig && window.appConfig.currencySymbol) ? window.appConfig.currencySymbol : '৳';
-            price.textContent = sym2 + parseFloat(match.price).toFixed(2);
+        if (match) {
+            const sym2    = (window.appConfig && window.appConfig.currencySymbol) ? window.appConfig.currencySymbol : '৳';
+            const fmt2    = (n) => sym2 + parseFloat(n).toFixed(2);
+            const hasDisc = match.final_price != null && match.final_price < match.price;
+            price.innerHTML = '';
+            if (hasDisc) {
+                price.textContent = fmt2(match.final_price);
+                const original = document.createElement('span');
+                original.className = 'ml-2 text-gray-700 text-sm line-through';
+                original.textContent = fmt2(match.price);
+                price.appendChild(original);
+            } else {
+                price.textContent = fmt2(match.final_price ?? match.price);
+            }
         }
     }
 

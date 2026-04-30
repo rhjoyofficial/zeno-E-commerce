@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\SettingController;
 
 use App\Http\Controllers\Admin\Product\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\Product\ProductVariantController;
+use App\Http\Controllers\Payment\PaymentController;
 use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
 
@@ -46,7 +47,7 @@ Route::controller(HomeController::class)->group(function () {
     Route::get('/', 'index')->name('home');
     Route::get('/about-us', 'aboutUs')->name('about.us');
     Route::get('/contact-us', 'contactUs')->name('contact.us');
-    Route::post('/contact-us', 'sendContactMessage')->name('contact.send');
+    Route::post('/contact-us', 'sendContactMessage')->name('contact.send')->middleware('throttle:5,10');
 });
 
 // Policy Routes
@@ -87,6 +88,16 @@ Route::controller(CheckoutController::class)->name('checkout.')->group(function 
     Route::post('/store', 'store')->name('store')->middleware('throttle:checkout');
     Route::get('/order/confirmation/{order}', 'confirmation')->name('confirmation');
 });
+
+// Payment
+Route::prefix('payment')->name('payment.')->controller(PaymentController::class)
+    ->middleware('throttle:10,1')
+    ->group(function () {
+        Route::post('/orders/{order}/bkash', 'bkash')->name('bkash');
+        Route::post('/orders/{order}/mobile-banking', 'mobileBanking')->name('mobile-banking');
+        Route::post('/orders/{order}/card', 'card')->name('card');
+        Route::post('/callback', 'callback')->name('callback');
+    });
 
 // ==================== AUTHENTICATION ROUTES ====================
 

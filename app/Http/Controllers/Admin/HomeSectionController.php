@@ -59,6 +59,7 @@ class HomeSectionController extends Controller
             }
 
             DB::commit();
+            Cache::forget('home_sections_active');
 
             return redirect()->route('admin.home-sections.index')
                 ->with('success', 'Home section created successfully.');
@@ -166,7 +167,7 @@ class HomeSectionController extends Controller
             }
 
             DB::commit();
-            Cache::forget("section_products_{$homeSection->id}");
+            $this->flushSectionCache($homeSection->id);
 
             return redirect()->route('admin.home-sections.index')
                 ->with('success', 'Home section updated successfully.');
@@ -187,7 +188,7 @@ class HomeSectionController extends Controller
         $homeSection->items()->each(fn($item) => $this->imageService->delete($item->image));
         $homeSection->items()->delete();
         $homeSection->delete();
-        Cache::forget("section_products_{$id}");
+        $this->flushSectionCache($id);
         return redirect()->route('admin.home-sections.index')->with('success', 'Section deleted.');
     }
 
@@ -197,7 +198,7 @@ class HomeSectionController extends Controller
             $homeSection->update([
                 'status' => $homeSection->status === 'active' ? 'inactive' : 'active'
             ]);
-            Cache::forget("section_products_{$homeSection->id}");
+            $this->flushSectionCache($homeSection->id);
 
             return response()->json([
                 'success' => true,
@@ -209,5 +210,11 @@ class HomeSectionController extends Controller
                 'message' => 'Failed to update status'
             ], 500);
         }
+    }
+
+    private function flushSectionCache(int $id): void
+    {
+        Cache::forget("section_products_{$id}");
+        Cache::forget('home_sections_active');
     }
 }

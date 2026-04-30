@@ -3,9 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}" sizes="32x32" />
     <link rel="apple-touch-icon" href="{{ asset('images/favicon.png') }}" sizes="180x180" />
@@ -101,8 +100,7 @@
                             <div>
                                 <img class="inline-block h-10 w-10 -full"
                                     src="{{ asset('images/default-avatar.png') }}"
-                                    onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&color=7F9CF5&background=EBF4FF'"
-                                    alt="">
+                                    alt="{{ Auth::user()->name }}">
                             </div>
                             <div class="ml-3">
                                 <p class="text-base font-medium text-gray-700 group-hover:text-gray-900">

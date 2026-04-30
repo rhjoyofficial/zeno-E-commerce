@@ -17,6 +17,7 @@ class Coupon extends Model
         'valid_from',
         'valid_to',
         'usage_limit',
+        'usage_limit_per_user',
         'is_active',
         'created_by',
         'updated_by',
@@ -42,6 +43,11 @@ class Coupon extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function usages()
+    {
+        return $this->hasMany(CouponUsage::class);
     }
 
     protected static function booted(): void

@@ -50,24 +50,29 @@ class CartService
      */
     protected function addToDatabaseCart(array $data): array
     {
-        $userId = Auth::id();
-        $existingItem = ProductCart::where('user_id', $userId)
-            ->where('product_id', $data['product_id'])
-            ->where('variant_id', $data['variant_id'] ?? null)
-            ->first();
+        $userId    = Auth::id();
+        $variantId = $data['variant_id'] ?? null;
+        $qty       = (int) $data['qty'];
 
-        if ($existingItem) {
-            $existingItem->qty += $data['qty'];
-            $existingItem->save();
-        } else {
-            ProductCart::create([
-                'user_id'    => $userId,
-                'product_id' => $data['product_id'],
-                'variant_id' => $data['variant_id'] ?? null,
-                'qty'        => $data['qty'],
-                'price'      => $data['price'],
-            ]);
-        }
+        DB::transaction(function () use ($userId, $data, $variantId, $qty) {
+            $existingItem = ProductCart::where('user_id', $userId)
+                ->where('product_id', $data['product_id'])
+                ->where('variant_id', $variantId)
+                ->lockForUpdate()
+                ->first();
+
+            if ($existingItem) {
+                $existingItem->increment('qty', $qty);
+            } else {
+                ProductCart::create([
+                    'user_id'    => $userId,
+                    'product_id' => $data['product_id'],
+                    'variant_id' => $variantId,
+                    'qty'        => $qty,
+                    'price'      => $data['price'],
+                ]);
+            }
+        });
 
         return [
             'success' => true,
@@ -222,20 +227,30 @@ class CartService
         $cart = Session::get('cart', []);
         DB::transaction(function () use ($cart) {
             foreach ($cart as $item) {
+                $availableStock = $this->getAvailableStock($item['product_id'], $item['variant_id'] ?? null);
+
+                if ($availableStock <= 0) {
+                    continue;
+                }
+
                 $existingItem = ProductCart::where([
                     'user_id'    => Auth::id(),
                     'product_id' => $item['product_id'],
                     'variant_id' => $item['variant_id'],
-                ])->first();
+                ])->lockForUpdate()->first();
 
                 if ($existingItem) {
-                    $existingItem->increment('qty', $item['qty']);
+                    $newQty = min($existingItem->qty + $item['qty'], $availableStock);
+                    if ($newQty > $existingItem->qty) {
+                        $existingItem->update(['qty' => $newQty]);
+                    }
                 } else {
+                    $qty = min((int) $item['qty'], $availableStock);
                     ProductCart::create([
                         'user_id'    => Auth::id(),
                         'product_id' => $item['product_id'],
                         'variant_id' => $item['variant_id'] ?? null,
-                        'qty'        => $item['qty'],
+                        'qty'        => $qty,
                         'price'      => $item['price'],
                     ]);
                 }

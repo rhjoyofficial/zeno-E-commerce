@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\Models\User;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OtpMail;
@@ -39,22 +37,25 @@ class OtpService
             throw new Exception("Please wait {$remaining} seconds before requesting a new OTP.");
         }
 
-        $otp = $this->generateSecureOtp();
+        $otp   = $this->generateSecureOtp();
         $token = Str::uuid()->toString();
+
+        // Persist first — if email fails the stored OTP can be resent; if DB fails nothing was sent.
+        $user->update([
+            'otp'                    => Hash::make($otp),
+            'otp_expires_at'         => now()->addMinutes(self::OTP_EXPIRE_MINUTES),
+            'otp_attempts'           => 0,
+            'otp_requests_today'     => $user->otp_requests_today + 1,
+            'last_otp_request_date'  => now()->toDateString(),
+            'last_otp_request_at'    => now(),
+            'otp_verification_token' => $token,
+        ]);
+
         try {
             Mail::to($user->email)->send(new OtpMail($otp, $user, $token));
-            $user->update([
-                'otp' => Hash::make($otp),
-                'otp_expires_at' => now()->addMinutes(self::OTP_EXPIRE_MINUTES),
-                'otp_attempts' => 0,
-                'otp_requests_today' => $user->otp_requests_today + 1,
-                'last_otp_request_date' => now()->toDateString(),
-                'last_otp_request_at' => now(),
-                'otp_verification_token' => $token,
-            ]);
         } catch (\Exception $e) {
             Log::error('Failed to send OTP email for user ' . $user->id . ': ' . $e->getMessage());
-            throw new Exception('Failed to send OTP. Please try again.');
+            throw new Exception('Failed to send OTP email. Please try again or contact support.');
         }
 
         return $token;

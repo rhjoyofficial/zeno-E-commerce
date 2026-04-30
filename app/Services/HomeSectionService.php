@@ -6,6 +6,7 @@ use App\Models\HomeSection;
 use App\Models\Product;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class HomeSectionService
 {
@@ -39,7 +40,12 @@ class HomeSectionService
                     ->get();
             }
 
-            if ($section->type === 'fashion' && $section->category) {
+            if ($section->type === 'fashion') {
+                if (!$section->category) {
+                    Log::warning("HomeSection [{$section->id}] \"{$section->title}\" is type 'fashion' but has no category_id — no products will be shown.");
+                    return collect();
+                }
+
                 $categoryIds = $section->category->getDescendantIds();
                 return Product::with($with)
                     ->whereIn('category_id', $categoryIds)

@@ -21,13 +21,17 @@
                                 @if ($cartItem->product)
                                     @php
                                         $realPrice = $cartItem->variant
-                                            ? $cartItem->variant->price
-                                            : $cartItem->product->price;
+                                            ? (float) $cartItem->variant->price
+                                            : (float) $cartItem->product->price;
+
+                                        // For variants: any non-null discount_price is active (no boolean flag).
+                                        // For products: respect the discount boolean flag.
                                         $discountPrice = $cartItem->variant
-                                            ? $cartItem->variant->discount_price
-                                            : $cartItem->product->discount_price;
+                                            ? ($cartItem->variant->discount_price ? (float) $cartItem->variant->discount_price : null)
+                                            : ($cartItem->product->discount && $cartItem->product->discount_price ? (float) $cartItem->product->discount_price : null);
+
                                         $effectivePrice = $discountPrice ?? $realPrice;
-                                        $youSave = $discountPrice ? $realPrice - $discountPrice : 0;
+                                        $youSave        = $discountPrice ? $realPrice - $discountPrice : 0;
                                         $savePercentage = $realPrice > 0 ? ($youSave / $realPrice) * 100 : 0;
                                     @endphp
                                     <hr data-hr-id="{{ $cartItem->id }}"
@@ -42,7 +46,7 @@
                                                     checked>
                                             </div>
                                             <img class="w-full h-full object-cover"
-                                                src="{{ asset('storage/' . $cartItem->product->primaryImage->image_path) }}"
+                                                src="{{ $cartItem->product->primaryImage ? asset('storage/' . $cartItem->product->primaryImage->image_path) : asset('images/products/default.jpg') }}"
                                                 alt="{{ $cartItem->product->title }}">
                                         </div>
                                         <div class="flex-1 min-w-0 font-semibold">

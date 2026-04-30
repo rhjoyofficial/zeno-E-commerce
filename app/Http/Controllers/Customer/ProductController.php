@@ -110,6 +110,7 @@ class ProductController extends Controller
             $productId = $request->input('product_id');
 
             $product = Product::with(['images'])
+                ->active()
                 ->byId($productId)
                 ->firstOrFail();
 
@@ -133,15 +134,16 @@ class ProductController extends Controller
 
                 $response['variants'] = $product->activeVariants->map(function ($variant) {
                     return [
-                        'id' => $variant->id,
-                        'color_id' => $variant->color_id,
-                        'color_name' => $variant->color ? $variant->color->name : null,
-                        'color_hex' => $variant->color ? $variant->color->hex_code : null,
-                        'size_id' => $variant->size_id,
-                        'size_name' => $variant->size ? $variant->size->name : null,
-                        'price' => $variant->price,
+                        'id'             => $variant->id,
+                        'color_id'       => $variant->color_id,
+                        'color_name'     => $variant->color ? $variant->color->name : null,
+                        'color_hex'      => $variant->color ? $variant->color->hex_code : null,
+                        'size_id'        => $variant->size_id,
+                        'size_name'      => $variant->size ? $variant->size->name : null,
+                        'price'          => (float) $variant->price,
+                        'final_price'    => (float) $variant->final_price,
                         'stock_quantity' => $variant->stock_quantity,
-                        'sku' => $variant->sku
+                        'sku'            => $variant->sku,
                     ];
                 });
             } else {

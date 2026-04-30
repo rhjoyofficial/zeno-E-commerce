@@ -86,6 +86,81 @@
     </div>
     @endif
 
+    {{-- Payment Instructions (non-COD) --}}
+    @if($order->payment_method !== 'cod' && $order->payment_status !== 'paid')
+
+        @if($order->payment_method === 'mobile-banking')
+        {{-- Mobile Banking: transaction ID form --}}
+        <div class="bg-blue-50 border border-blue-200 p-6 mb-8">
+            <h2 class="font-semibold text-blue-900 mb-2">Complete Your Payment</h2>
+            <p class="text-sm text-blue-700 mb-4">
+                Please send <strong>{{ $order->currency }} {{ number_format($order->total, 2) }}</strong>
+                to our mobile banking number and enter your Transaction ID below to confirm your order.
+            </p>
+
+            @if(session('info'))
+                <div class="bg-blue-100 border border-blue-300 text-blue-800 text-sm px-4 py-3 rounded mb-4">
+                    {{ session('info') }}
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="bg-red-100 border border-red-300 text-red-700 text-sm px-4 py-3 rounded mb-4">
+                    {{ $errors->first() }}
+                </div>
+            @endif
+
+            @if($order->transaction_id)
+                <p class="text-sm text-green-700 font-medium">
+                    ✓ Transaction ID submitted: <span class="font-mono">{{ $order->transaction_id }}</span>. Awaiting verification.
+                </p>
+            @else
+                <form action="{{ route('payment.mobile-banking', $order) }}" method="POST" class="flex flex-col sm:flex-row gap-3">
+                    @csrf
+                    <input
+                        type="text"
+                        name="transaction_id"
+                        placeholder="Enter Transaction ID (e.g. ABC123456)"
+                        maxlength="100"
+                        required
+                        class="flex-1 border border-blue-300 px-4 py-2 text-sm focus:outline-none focus:border-blue-500"
+                    />
+                    <button type="submit"
+                        class="px-6 py-2 bg-blue-700 text-white text-sm uppercase tracking-wider hover:bg-blue-800 transition whitespace-nowrap">
+                        Submit Transaction ID
+                    </button>
+                </form>
+            @endif
+        </div>
+
+        @elseif($order->payment_method === 'bkash')
+        {{-- bKash: coming soon notice --}}
+        <div class="bg-pink-50 border border-pink-200 p-6 mb-8">
+            <h2 class="font-semibold text-pink-900 mb-2">bKash Payment</h2>
+            <p class="text-sm text-pink-700">
+                Online bKash payment gateway is coming soon. Please contact us at
+                <strong>{{ config('app.support_phone', '+880-XXX-XXXXXX') }}</strong> or send payment manually
+                and share the Transaction ID via our contact page.
+            </p>
+        </div>
+
+        @elseif($order->payment_method === 'card')
+        {{-- Card: coming soon notice --}}
+        <div class="bg-yellow-50 border border-yellow-200 p-6 mb-8">
+            <h2 class="font-semibold text-yellow-900 mb-2">Card Payment</h2>
+            <p class="text-sm text-yellow-700">
+                Online card payment gateway is coming soon. Please contact us at
+                <strong>{{ config('app.support_phone', '+880-XXX-XXXXXX') }}</strong> to arrange payment.
+            </p>
+        </div>
+        @endif
+
+    @elseif($order->payment_method === 'cod')
+        <div class="bg-gray-50 border border-gray-200 p-4 mb-8 text-sm text-gray-600">
+            <strong>Cash on Delivery:</strong> Please keep the exact amount ready at the time of delivery.
+        </div>
+    @endif
+
     {{-- CTA --}}
     <div class="flex flex-col sm:flex-row gap-4 justify-center text-center">
         @auth

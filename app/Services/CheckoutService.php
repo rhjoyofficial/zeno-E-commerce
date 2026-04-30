@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Coupon;
+use App\Models\CouponUsage;
 use App\Models\Order;
 use App\Services\SequenceService;
 use App\Models\ProductCart;
@@ -14,7 +15,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Exception;
 
 class CheckoutService
@@ -134,6 +134,16 @@ class CheckoutService
                     throw new Exception("This coupon requires a minimum order of {$coupon->min_order_amount}.");
                 }
 
+                if ($userId && $coupon->usage_limit_per_user) {
+                    $userUsageCount = CouponUsage::where('coupon_id', $coupon->id)
+                        ->where('user_id', $userId)
+                        ->count();
+
+                    if ($userUsageCount >= $coupon->usage_limit_per_user) {
+                        throw new Exception("You have already used this coupon the maximum number of times.");
+                    }
+                }
+
                 $couponDiscount = $this->calculateCouponDiscount($coupon, $totals['subtotal']);
                 $totals['discountTotal'] += $couponDiscount;
                 $totals['grandTotal']    -= $couponDiscount;
@@ -212,11 +222,19 @@ class CheckoutService
             $this->clearProcessedCartItems($selectedIds);
 
             if ($validatedData['payment'] === 'cod') {
-                $order->update(['status' => 'confirmed']);
+                $order->update(['status' => 'confirmed', 'confirmed_at' => now()]);
             }
 
             if ($coupon) {
                 $coupon->increment('used_count');
+
+                if ($userId) {
+                    CouponUsage::create([
+                        'coupon_id' => $coupon->id,
+                        'user_id'   => $userId,
+                        'order_id'  => $order->id,
+                    ]);
+                }
             }
 
             DB::commit();
